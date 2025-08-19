@@ -1,0 +1,152 @@
+version: '3.7'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.4
+    ports:
+      - "2181:2181"
+      - "2888:2888"
+      - "3888:3888"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper
+    networks:
+      - minio-sample
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.4
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    links:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: "INTERNAL://:29092,EXTERNAL://:9092"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1  # ✅ fix
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1             # ✅ fix
+    volumes:
+      - kafka-data:/var/lib/kafka
+    networks:
+      - minio-sample
+
+  mysql1:
+    image: mysql:8.3.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_source
+      MYSQL_USER: akt
+      MYSQL_PASSWORD: root
+    ports:
+      - "3308:3306"
+    command:
+      [
+        "--server-id=1002",
+        "--log-bin=mysql-bin",
+        "--binlog-format=ROW",
+        "--gtid-mode=ON",
+        "--enforce-gtid-consistency=ON",
+        "--binlog-do-db=db_source",
+        "--sql_mode=ALLOW_INVALID_DATES,NO_ENGINE_SUBSTITUTION"
+      ]
+    volumes:
+      - ./mysql1-data:/var/lib/mysql
+      # - ./mysql1-config:/etc/mysql/conf.d:ro
+    networks:
+      - minio-sample
+
+  mysql2:
+    image: mariadb:11
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_target
+    ports:
+      - "3309:3306"
+    command:
+      - --server-id=1003
+      - --log-bin=mysql-bin
+      - --binlog-format=ROW
+      - --binlog-do-db=db_target
+      - --log_slave_updates=1
+      - --gtid_domain_id=1
+      - --sql_mode=ALLOW_INVALID_DATES,NO_ENGINE_SUBSTITUTION
+    volumes:
+      - ./mysql2-data:/var/lib/mysql
+      # - ./mysql2-config:/etc/mysql/conf.d:ro
+    networks:
+      - minio-sample
+
+  debezium:
+    image: debezium/connect:3.0.0.Final
+    ports:
+      - "8083:8083"
+      - "5005:5005"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:29092
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: debezium_connect_config
+      OFFSET_STORAGE_TOPIC: debezium_connect_offsets
+      STATUS_STORAGE_TOPIC: debezium_connect_status
+      CONNECT_TOPIC_CREATION_ENABLE: "true"
+    depends_on:
+      - kafka
+      - mysql1
+      - mysql2
+    networks:
+      - minio-sample
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: kafka:29092
+      JVM_OPTS: "-Xms32M -Xmx128M"
+    depends_on:
+      - kafka
+    networks:
+      - minio-sample
+
+  # ksqldb-server:
+  #   image: confluentinc/ksqldb-server:0.28.2
+  #   hostname: ksqldb-server
+  #   container_name: ksqldb-server
+  #   links:
+  #     - kafka
+  #   ports:
+  #     - "8088:8088"
+  #   environment:
+  #     KSQL_LISTENERS: http://0.0.0.0:8088
+  #     KSQL_BOOTSTRAP_SERVERS: kafka:29092
+  #     KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+  #     KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+  #     KSQL_KSQL_STREAMS_AUTO_OFFSET_RESET: earliest
+  #   networks:
+  #     - minio-sample
+
+  # ksqldb-cli:
+  #   image: confluentinc/ksqldb-cli:0.28.2
+  #   container_name: ksqldb-cli
+  #   depends_on:
+  #     - kafka
+  #     - ksqldb-server
+  #   entrypoint: /bin/sh
+  #   tty: true
+  #   networks:
+  #     - minio-sample
+
+volumes:
+  zookeeper-data:
+  kafka-data:
+  mysql1-data:
+  mysql2-data:
+
+networks:
+  minio-sample:
+    driver: bridge
