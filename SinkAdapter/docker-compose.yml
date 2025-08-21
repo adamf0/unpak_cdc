@@ -8,12 +8,12 @@ services:
     container_name: SimonevConsume_user
     restart: unless-stopped
     environment:
-      - TZ: Asia/Jakarta
-      - DSN: "cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
-      - BROKERS: "host.docker.internal:9092"
-      - GROUP_ID: "user_consumeto_simonev"
-      - TOPIC: "simak1.unpak_simak.user"
-      - TABLE: "user_simak"
+      - TZ=Asia/Jakarta
+      - DSN="cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
+      - BROKERS="host.docker.internal:9092"
+      - GROUP_ID="user_consumeto_simonev"
+      - TOPIC="simak1.unpak_simak.user"
+      - TABLE="user_simak"
     networks:
       - mynet
 
@@ -24,12 +24,12 @@ services:
   #   container_name: SimonevConsume_m_fakultas
   #   restart: unless-stopped
   #   environment:
-  #     - TZ: Asia/Jakarta
-  #     - DSN: "cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
-  #     - BROKERS: "host.docker.internal:9092"
-  #     - GROUP_ID: "m_fakultas_consumeto_simonev"
-  #     - TOPIC: "simak2.unpak_simak.m_fakultas"
-  #     - TABLE: "m_fakultas_simak"
+  #     - TZ=Asia/Jakarta
+  #     - DSN="cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
+  #     - BROKERS="host.docker.internal:9092"
+  #     - GROUP_ID="m_fakultas_consumeto_simonev"
+  #     - TOPIC="simak2.unpak_simak.m_fakultas"
+  #     - TABLE="m_fakultas_simak"
   #   networks:
   #     - mynet
 
@@ -40,12 +40,12 @@ services:
   #   container_name: SimonevConsume_r_prodi
   #   restart: unless-stopped
   #   environment:
-  #     - TZ: Asia/Jakarta
-  #     - DSN: "cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
-  #     - BROKERS: "host.docker.internal:9092"
-  #     - GROUP_ID: "r_prodi_consumeto_simonev"
-  #     - TOPIC: "simak3.unpak_simak.r_prodi"
-  #     - TABLE: "r_prodi_simak"
+  #     - TZ=Asia/Jakarta
+  #     - DSN="cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
+  #     - BROKERS="host.docker.internal:9092"
+  #     - GROUP_ID="r_prodi_consumeto_simonev"
+  #     - TOPIC="simak3.unpak_simak.r_prodi"
+  #     - TABLE="r_prodi_simak"
   #   networks:
   #     - mynet
 
@@ -56,12 +56,12 @@ services:
   #   container_name: SimonevConsume_m_program_studi
   #   restart: unless-stopped
   #   environment:
-  #     - TZ: Asia/Jakarta
-  #     - DSN: "cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
-  #     - BROKERS: "host.docker.internal:9092"
-  #     - GROUP_ID: "m_program_studi_consumeto_simonev"
-  #     - TOPIC: "simak4.unpak_simak.m_program_studi"
-  #     - TABLE: "m_program_studi_simak"
+  #     - TZ=Asia/Jakarta
+  #     - DSN="cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
+  #     - BROKERS="host.docker.internal:9092"
+  #     - GROUP_ID="m_program_studi_consumeto_simonev"
+  #     - TOPIC="simak4.unpak_simak.m_program_studi"
+  #     - TABLE="m_program_studi_simak"
   #   networks:
   #     - mynet
 
@@ -72,12 +72,12 @@ services:
   #   container_name: SimonevConsume_pengguna
   #   restart: unless-stopped
   #   environment:
-  #     - TZ: Asia/Jakarta
-  #     - DSN: "cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
-  #     - BROKERS: "host.docker.internal:9092"
-  #     - GROUP_ID: "pengguna_consumeto_simonev"
-  #     - TOPIC: "simpeg7.unpak_simpeg.pengguna"
-  #     - TABLE: "pengguna_simpeg"
+  #     - TZ=Asia/Jakarta
+  #     - DSN="cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
+  #     - BROKERS="host.docker.internal:9092"
+  #     - GROUP_ID="pengguna_consumeto_simonev"
+  #     - TOPIC="simpeg7.unpak_simpeg.pengguna"
+  #     - TABLE="pengguna_simpeg"
   #   networks:
   #     - mynet
 
@@ -88,12 +88,12 @@ services:
   #   container_name: SimonevConsume_e_pribadi
   #   restart: unless-stopped
   #   environment:
-  #     - TZ: Asia/Jakarta
-  #     - DSN: "cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
-  #     - BROKERS: "host.docker.internal:9092"
-  #     - GROUP_ID: "e_pribadi_consumeto_simonev"
-  #     - TOPIC: "simpeg8.unpak_simpeg.e_pribadi"
-  #     - TABLE: "e_pribadi_simpeg"
+  #     - TZ=Asia/Jakarta
+  #     - DSN="cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
+  #     - BROKERS="host.docker.internal:9092"
+  #     - GROUP_ID="e_pribadi_consumeto_simonev"
+  #     - TOPIC="simpeg8.unpak_simpeg.e_pribadi"
+  #     - TABLE="e_pribadi_simpeg"
   #   networks:
   #     - mynet
 
@@ -104,12 +104,12 @@ services:
   #   container_name: SimonevConsume_n_pribadi
   #   restart: unless-stopped
   #   environment:
-  #     - TZ: Asia/Jakarta
-  #     - DSN: "cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
-  #     - BROKERS: "host.docker.internal:9092"
-  #     - GROUP_ID: "n_pribadi_consumeto_simonev"
-  #     - TOPIC: "simpeg9.unpak_simpeg.n_pribadi"
-  #     - TABLE: "n_pribadi_simpeg"
+  #     - TZ=Asia/Jakarta
+  #     - DSN="cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
+  #     - BROKERS="host.docker.internal:9092"
+  #     - GROUP_ID="n_pribadi_consumeto_simonev"
+  #     - TOPIC="simpeg9.unpak_simpeg.n_pribadi"
+  #     - TABLE="n_pribadi_simpeg"
   #   networks:
   #     - mynet
 
@@ -120,12 +120,12 @@ services:
   #   container_name: SimonevConsume_n_pengangkatan
   #   restart: unless-stopped
   #   environment:
-  #     - TZ: Asia/Jakarta
-  #     - DSN: "cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
-  #     - BROKERS: "host.docker.internal:9092"
-  #     - GROUP_ID: "n_pengangkatan_consumeto_simonev"
-  #     - TOPIC: "simpeg10.unpak_simpeg.n_pengangkatan"
-  #     - TABLE: "n_pengangkatan_simpeg"
+  #     - TZ=Asia/Jakarta
+  #     - DSN="cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
+  #     - BROKERS="host.docker.internal:9092"
+  #     - GROUP_ID="n_pengangkatan_consumeto_simonev"
+  #     - TOPIC="simpeg10.unpak_simpeg.n_pengangkatan"
+  #     - TABLE="n_pengangkatan_simpeg"
   #   networks:
   #     - mynet
 
@@ -136,12 +136,12 @@ services:
   #   container_name: SimonevConsume_payroll_m_pegawai
   #   restart: unless-stopped
   #   environment:
-  #     - TZ: Asia/Jakarta
-  #     - DSN: "cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
-  #     - BROKERS: "host.docker.internal:9092"
-  #     - GROUP_ID: "payroll_m_pegawai_consumeto_simonev"
-  #     - TOPIC: "simpeg11.unpak_simpeg.payroll_m_pegawai"
-  #     - TABLE: "payroll_m_pegawai_simpeg"
+  #     - TZ=Asia/Jakarta
+  #     - DSN="cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
+  #     - BROKERS="host.docker.internal:9092"
+  #     - GROUP_ID="payroll_m_pegawai_consumeto_simonev"
+  #     - TOPIC="simpeg11.unpak_simpeg.payroll_m_pegawai"
+  #     - TABLE="payroll_m_pegawai_simpeg"
   #   networks:
   #     - mynet
 
