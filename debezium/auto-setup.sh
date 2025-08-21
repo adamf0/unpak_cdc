@@ -3,7 +3,10 @@ set -e
 
 CONNECT_URL="https://cdc-api.unpak.ac.id/connectors"
 
-for file in /connectors/*.json; do
+# ambil semua file json dari folder connectors di dalam folder yang sama
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+for file in "$SCRIPT_DIR"/connectors/*.json; do
   name=$(jq -r .name "$file")
   echo ">> Setting up connector: $name"
 
