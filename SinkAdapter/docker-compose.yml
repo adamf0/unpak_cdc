@@ -2,9 +2,10 @@ version: '3.9'
 
 services:
   simonevconsume_user:
-    build:
-      context: ./SimonevConsume_user
-      dockerfile: Dockerfile
+    # build:
+    #   context: ./SimonevConsume_user
+    #   dockerfile: Dockerfile
+    image: adamilkom00/simonevconsume_user:0.0.1
     container_name: simonevconsume_user
     restart: unless-stopped
     environment:
