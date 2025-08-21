@@ -3,7 +3,7 @@ version: '3.9'
 services:
   SimonevConsume_user:
     build:
-      context: SimonevConsume_user/.
+      context: ./SimonevConsume_user
       dockerfile: Dockerfile
     container_name: SimonevConsume_user
     restart: unless-stopped
@@ -19,7 +19,7 @@ services:
 
   # SimonevConsume_m_fakultas:
   #   build:
-  #     context: SimonevConsume_m_fakultas/.
+  #     context: ./SimonevConsume_m_fakultas
   #     dockerfile: Dockerfile
   #   container_name: SimonevConsume_m_fakultas
   #   restart: unless-stopped
@@ -35,7 +35,7 @@ services:
 
   # SimonevConsume_r_prodi:
   #   build:
-  #     context: SimonevConsume_r_prodi/.
+  #     context: ./SimonevConsume_r_prodi
   #     dockerfile: Dockerfile
   #   container_name: SimonevConsume_r_prodi
   #   restart: unless-stopped
@@ -51,7 +51,7 @@ services:
 
   # SimonevConsume_m_program_studi:
   #   build:
-  #     context: SimonevConsume_m_program_studi/.
+  #     context: ./SimonevConsume_m_program_studi
   #     dockerfile: Dockerfile
   #   container_name: SimonevConsume_m_program_studi
   #   restart: unless-stopped
@@ -67,7 +67,7 @@ services:
 
   # SimonevConsume_pengguna:
   #   build:
-  #     context: SimonevConsume_pengguna/.
+  #     context: ./SimonevConsume_pengguna
   #     dockerfile: Dockerfile
   #   container_name: SimonevConsume_pengguna
   #   restart: unless-stopped
@@ -83,7 +83,7 @@ services:
 
   # SimonevConsume_e_pribadi:
   #   build:
-  #     context: SimonevConsume_e_pribadi/.
+  #     context: ./SimonevConsume_e_pribadi
   #     dockerfile: Dockerfile
   #   container_name: SimonevConsume_e_pribadi
   #   restart: unless-stopped
@@ -99,7 +99,7 @@ services:
 
   # SimonevConsume_n_pribadi:
   #   build:
-  #     context: SimonevConsume_n_pribadi/.
+  #     context: ./SimonevConsume_n_pribadi
   #     dockerfile: Dockerfile
   #   container_name: SimonevConsume_n_pribadi
   #   restart: unless-stopped
@@ -115,7 +115,7 @@ services:
 
   # SimonevConsume_n_pengangkatan:
   #   build:
-  #     context: SimonevConsume_n_pengangkatan/.
+  #     context: ./SimonevConsume_n_pengangkatan
   #     dockerfile: Dockerfile
   #   container_name: SimonevConsume_n_pengangkatan
   #   restart: unless-stopped
@@ -131,7 +131,7 @@ services:
 
   # SimonevConsume_payroll_m_pegawai:
   #   build:
-  #     context: SimonevConsume_payroll_m_pegawai/.
+  #     context: ./SimonevConsume_payroll_m_pegawai
   #     dockerfile: Dockerfile
   #   container_name: SimonevConsume_payroll_m_pegawai
   #   restart: unless-stopped
