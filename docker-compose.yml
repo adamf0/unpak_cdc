@@ -36,52 +36,6 @@ services:
     networks:
       - minio-sample
 
-  mysql1:
-    image: mysql:8.3.0
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db_source
-      MYSQL_USER: akt
-      MYSQL_PASSWORD: root
-    ports:
-      - "3308:3306"
-    command:
-      [
-        "--server-id=1002",
-        "--log-bin=mysql-bin",
-        "--binlog-format=ROW",
-        "--gtid-mode=ON",
-        "--enforce-gtid-consistency=ON",
-        "--binlog-do-db=db_source",
-        "--sql_mode=ALLOW_INVALID_DATES,NO_ENGINE_SUBSTITUTION"
-      ]
-    volumes:
-      - ./mysql1-data:/var/lib/mysql
-      # - ./mysql1-config:/etc/mysql/conf.d:ro
-    networks:
-      - minio-sample
-
-  mysql2:
-    image: mariadb:11
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db_target
-    ports:
-      - "3309:3306"
-    command:
-      - --server-id=1003
-      - --log-bin=mysql-bin
-      - --binlog-format=ROW
-      - --binlog-do-db=db_target
-      - --log_slave_updates=1
-      - --gtid_domain_id=1
-      - --sql_mode=ALLOW_INVALID_DATES,NO_ENGINE_SUBSTITUTION
-    volumes:
-      - ./mysql2-data:/var/lib/mysql
-      # - ./mysql2-config:/etc/mysql/conf.d:ro
-    networks:
-      - minio-sample
-
   debezium:
     image: debezium/connect:3.0.0.Final
     ports:
@@ -96,8 +50,6 @@ services:
       CONNECT_TOPIC_CREATION_ENABLE: "true"
     depends_on:
       - kafka
-      - mysql1
-      - mysql2
     networks:
       - minio-sample
 
@@ -112,34 +64,6 @@ services:
       - kafka
     networks:
       - minio-sample
-
-  # ksqldb-server:
-  #   image: confluentinc/ksqldb-server:0.28.2
-  #   hostname: ksqldb-server
-  #   container_name: ksqldb-server
-  #   links:
-  #     - kafka
-  #   ports:
-  #     - "8088:8088"
-  #   environment:
-  #     KSQL_LISTENERS: http://0.0.0.0:8088
-  #     KSQL_BOOTSTRAP_SERVERS: kafka:29092
-  #     KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
-  #     KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
-  #     KSQL_KSQL_STREAMS_AUTO_OFFSET_RESET: earliest
-  #   networks:
-  #     - minio-sample
-
-  # ksqldb-cli:
-  #   image: confluentinc/ksqldb-cli:0.28.2
-  #   container_name: ksqldb-cli
-  #   depends_on:
-  #     - kafka
-  #     - ksqldb-server
-  #   entrypoint: /bin/sh
-  #   tty: true
-  #   networks:
-  #     - minio-sample
 
 volumes:
   zookeeper-data:
