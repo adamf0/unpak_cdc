@@ -15,7 +15,7 @@ services:
       - TOPIC=simak1.unpak_simak.user
       - TABLE=user_simak
     networks:
-      - mynet
+      - minio-sample
 
   # simonevconsume_m_fakultas:
   #   build:
@@ -144,8 +144,3 @@ services:
   #     - TABLE="payroll_m_pegawai_simpeg"
   #   networks:
   #     - mynet
-
-networks:
-  mynet:
-    name: minio-sample
-    external: true

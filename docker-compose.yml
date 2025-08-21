@@ -73,4 +73,5 @@ volumes:
 
 networks:
   minio-sample:
+    external: true
     driver: bridge
