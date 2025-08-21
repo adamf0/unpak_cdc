@@ -147,4 +147,5 @@ services:
 
 networks:
   mynet:
+    name: minio-sample
     external: true
