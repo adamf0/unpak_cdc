@@ -9,7 +9,7 @@
         "database.port": "3306",
         "database.user": "cdc",
         "database.password": "unp@kcdc0k3",
-        "database.server.id": "700",
+        "database.server.id": "1100",
         "topic.prefix": "simpeg11",
         "database.allowPublicKeyRetrieval": "true",
         "database.include.list": "unpak_simpeg",
