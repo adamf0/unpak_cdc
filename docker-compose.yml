@@ -71,7 +71,7 @@ services:
     restart: unless-stopped
     environment:
       - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
-      - BROKERS=localhost:9092
+      - BROKERS=kafka:29092
       - GROUP_ID=user_consumeto_simonev
       - TOPIC=simak1.unpak_simak.user
       - TABLE=user_simak
