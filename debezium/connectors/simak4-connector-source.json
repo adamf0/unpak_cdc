@@ -1,0 +1,23 @@
+{
+    "name": "simak4-connector-source",
+    "config": {
+        "connector.class": "io.debezium.connector.mariadb.MariaDbConnector",
+        "tasks.max": "1",
+        "database.ssl.mode": "disabled",
+        "database.connectionTimeZone": "Asia/Jakarta",
+        "database.hostname": "172.16.21.3",
+        "database.port": "30130",
+        "database.user": "cdc",
+        "database.password": "unp@kcdc0k3",
+        "database.server.id": "400",
+        "topic.prefix": "simak4",
+        "database.allowPublicKeyRetrieval": "true",
+        "database.include.list": "unpak_simak",
+        "table.include.list": "unpak_simak.m_program_studi",
+        "schema.history.internal.kafka.bootstrap.servers": "kafka:29092",
+        "schema.history.internal.kafka.topic": "schema-changes.simak4",
+        "include.schema.changes": "true",
+        "snapshot.mode": "initial",
+        "snapshot.locking.mode": "none"
+    }
+}

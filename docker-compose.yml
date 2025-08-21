@@ -48,6 +48,10 @@ services:
       OFFSET_STORAGE_TOPIC: debezium_connect_offsets
       STATUS_STORAGE_TOPIC: debezium_connect_status
       CONNECT_TOPIC_CREATION_ENABLE: "true"
+    volumes:
+      - ./debezium/connectors:/kafka/connectors
+      - ./debezium/auto-setup.sh:/kafka/auto-setup.sh
+    command: ["/bin/bash", "-c", "connect-distributed /kafka/config/connect-distributed.properties & sleep 15 && /kafka/auto-setup.sh && wait"]
     depends_on:
       - kafka
     networks:

@@ -1,0 +1,23 @@
+{
+    "name": "simpeg8-connector-source",
+    "config": {
+        "connector.class": "io.debezium.connector.mariadb.MariaDbConnector",
+        "tasks.max": "1",
+        "database.ssl.mode": "disabled",
+        "database.connectionTimeZone": "Asia/Jakarta",
+        "database.hostname": "172.16.20.245",
+        "database.port": "3306",
+        "database.user": "cdc",
+        "database.password": "unp@kcdc0k3",
+        "database.server.id": "800",
+        "topic.prefix": "simpeg8",
+        "database.allowPublicKeyRetrieval": "true",
+        "database.include.list": "unpak_simpeg",
+        "table.include.list": "unpak_simpeg.e_pribadi",
+        "schema.history.internal.kafka.bootstrap.servers": "kafka:29092",
+        "schema.history.internal.kafka.topic": "schema-changes.simpeg8",
+        "include.schema.changes": "true",
+        "snapshot.mode": "initial",
+        "snapshot.locking.mode": "none"
+    }
+}
