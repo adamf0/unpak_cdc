@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-CONNECT_URL="http://unpak:8083/connectors"
+CONNECT_URL="https://cdc-api.unpak.ac.id/connectors"
 
-for file in /kafka/connectors/*.json; do
+for file in /connectors/*.json; do
   name=$(jq -r .name "$file")
   echo ">> Setting up connector: $name"
 
