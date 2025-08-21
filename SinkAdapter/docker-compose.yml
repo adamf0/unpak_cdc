@@ -1,11 +1,11 @@
 version: '3.9'
 
 services:
-  SimonevConsume_user:
+  simonevconsume_user:
     build:
-      context: ./SimonevConsume_user
+      context: ./simonevconsume_user
       dockerfile: Dockerfile
-    container_name: SimonevConsume_user
+    container_name: simonevconsume_user
     restart: unless-stopped
     environment:
       - TZ=Asia/Jakarta
@@ -17,11 +17,11 @@ services:
     networks:
       - mynet
 
-  # SimonevConsume_m_fakultas:
+  # simonevconsume_m_fakultas:
   #   build:
-  #     context: ./SimonevConsume_m_fakultas
+  #     context: ./simonevconsume_m_fakultas
   #     dockerfile: Dockerfile
-  #   container_name: SimonevConsume_m_fakultas
+  #   container_name: simonevconsume_m_fakultas
   #   restart: unless-stopped
   #   environment:
   #     - TZ=Asia/Jakarta
@@ -33,11 +33,11 @@ services:
   #   networks:
   #     - mynet
 
-  # SimonevConsume_r_prodi:
+  # simonevconsume_r_prodi:
   #   build:
-  #     context: ./SimonevConsume_r_prodi
+  #     context: ./simonevconsume_r_prodi
   #     dockerfile: Dockerfile
-  #   container_name: SimonevConsume_r_prodi
+  #   container_name: simonevconsume_r_prodi
   #   restart: unless-stopped
   #   environment:
   #     - TZ=Asia/Jakarta
@@ -49,11 +49,11 @@ services:
   #   networks:
   #     - mynet
 
-  # SimonevConsume_m_program_studi:
+  # simonevconsume_m_program_studi:
   #   build:
-  #     context: ./SimonevConsume_m_program_studi
+  #     context: ./simonevconsume_m_program_studi
   #     dockerfile: Dockerfile
-  #   container_name: SimonevConsume_m_program_studi
+  #   container_name: simonevconsume_m_program_studi
   #   restart: unless-stopped
   #   environment:
   #     - TZ=Asia/Jakarta
@@ -65,11 +65,11 @@ services:
   #   networks:
   #     - mynet
 
-  # SimonevConsume_pengguna:
+  # simonevconsume_pengguna:
   #   build:
-  #     context: ./SimonevConsume_pengguna
+  #     context: ./simonevconsume_pengguna
   #     dockerfile: Dockerfile
-  #   container_name: SimonevConsume_pengguna
+  #   container_name: simonevconsume_pengguna
   #   restart: unless-stopped
   #   environment:
   #     - TZ=Asia/Jakarta
@@ -81,11 +81,11 @@ services:
   #   networks:
   #     - mynet
 
-  # SimonevConsume_e_pribadi:
+  # simonevconsume_e_pribadi:
   #   build:
-  #     context: ./SimonevConsume_e_pribadi
+  #     context: ./simonevconsume_e_pribadi
   #     dockerfile: Dockerfile
-  #   container_name: SimonevConsume_e_pribadi
+  #   container_name: simonevconsume_e_pribadi
   #   restart: unless-stopped
   #   environment:
   #     - TZ=Asia/Jakarta
@@ -97,11 +97,11 @@ services:
   #   networks:
   #     - mynet
 
-  # SimonevConsume_n_pribadi:
+  # simonevconsume_n_pribadi:
   #   build:
-  #     context: ./SimonevConsume_n_pribadi
+  #     context: ./simonevconsume_n_pribadi
   #     dockerfile: Dockerfile
-  #   container_name: SimonevConsume_n_pribadi
+  #   container_name: simonevconsume_n_pribadi
   #   restart: unless-stopped
   #   environment:
   #     - TZ=Asia/Jakarta
@@ -113,11 +113,11 @@ services:
   #   networks:
   #     - mynet
 
-  # SimonevConsume_n_pengangkatan:
+  # simonevconsume_n_pengangkatan:
   #   build:
-  #     context: ./SimonevConsume_n_pengangkatan
+  #     context: ./simonevconsume_n_pengangkatan
   #     dockerfile: Dockerfile
-  #   container_name: SimonevConsume_n_pengangkatan
+  #   container_name: simonevconsume_n_pengangkatan
   #   restart: unless-stopped
   #   environment:
   #     - TZ=Asia/Jakarta
@@ -129,11 +129,11 @@ services:
   #   networks:
   #     - mynet
 
-  # SimonevConsume_payroll_m_pegawai:
+  # simonevconsume_payroll_m_pegawai:
   #   build:
-  #     context: ./SimonevConsume_payroll_m_pegawai
+  #     context: ./simonevconsume_payroll_m_pegawai
   #     dockerfile: Dockerfile
-  #   container_name: SimonevConsume_payroll_m_pegawai
+  #   container_name: simonevconsume_payroll_m_pegawai
   #   restart: unless-stopped
   #   environment:
   #     - TZ=Asia/Jakarta
