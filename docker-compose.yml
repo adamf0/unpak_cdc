@@ -51,7 +51,7 @@ services:
     volumes:
       - ./debezium/connectors:/kafka/connectors
       - ./debezium/auto-setup.sh:/kafka/auto-setup.sh
-    command: ["/bin/bash", "-c", "connect-distributed /kafka/config/connect-distributed.properties & sleep 15 && /kafka/auto-setup.sh && wait"]
+    command: ["/bin/bash", "-c", "/docker-entrypoint.sh start & sleep 15 && chmod +x /kafka/auto-setup.sh && /kafka/auto-setup.sh && wait"]
     depends_on:
       - kafka
     networks:
