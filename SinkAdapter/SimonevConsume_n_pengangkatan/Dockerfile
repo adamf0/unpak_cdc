@@ -25,7 +25,7 @@ WORKDIR /app
 COPY --from=builder /app/consumer .
 
 # Set timezone jika perlu
-ENV TZ=Asia/Jakarta
+#ENV TZ=Asia/Jakarta
 
 # Run
 CMD ["./consumer"]
