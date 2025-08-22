@@ -177,7 +177,7 @@ services:
       - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
       - BROKERS=kafka:29092
       - GROUP_ID=payroll_m_pegawai_consumeto_simonev
-      - TOPIC=simpeg10.unpak_simpeg.payroll_m_pegawai
+      - TOPIC=simpeg11.unpak_simpeg.payroll_m_pegawai
       - TABLE=payroll_m_pegawai_simpeg
     networks:
       - minio-sample
