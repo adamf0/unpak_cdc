@@ -79,9 +79,7 @@ services:
       - minio-sample
 
   simonevconsume_m_fakultas:
-    build:
-      context: ./SimonevConsume_m_fakultas
-      dockerfile: Dockerfile
+    image: adamilkom00/simonevconsume_m_fakultas:0.0.1
     container_name: simonevconsume_m_fakultas
     restart: unless-stopped
     environment:
@@ -93,35 +91,31 @@ services:
     networks:
       - minio-sample
 
-  # simonevconsume_r_prodi:
-  #   build:
-  #     context: ./SimonevConsume_r_prodi
-  #     dockerfile: Dockerfile
-  #   container_name: simonevconsume_r_prodi
-  #   restart: unless-stopped
-  #   environment:
-  #     - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
-  #     - BROKERS=kafka:29092
-  #     - GROUP_ID="r_prodi_consumeto_simonev"
-  #     - TOPIC="simak3.unpak_simak.r_prodi"
-  #     - TABLE="r_prodi_simak"
-  #   networks:
-  #     - minio-sample
+  simonevconsume_r_prodi:
+    image: adamilkom00/simonevconsume_r_prodi:0.0.1
+    container_name: simonevconsume_r_prodi
+    restart: unless-stopped
+    environment:
+      - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
+      - BROKERS=kafka:29092
+      - GROUP_ID="r_prodi_consumeto_simonev"
+      - TOPIC="simak3.unpak_simak.r_prodi"
+      - TABLE="r_prodi_simak"
+    networks:
+      - minio-sample
 
-  # simonevconsume_m_program_studi:
-  #   build:
-  #     context: ./SimonevConsume_m_program_studi
-  #     dockerfile: Dockerfile
-  #   container_name: simonevconsume_m_program_studi
-  #   restart: unless-stopped
-  #   environment:
-  #     - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
-  #     - BROKERS=kafka:29092
-  #     - GROUP_ID="m_program_studi_consumeto_simonev"
-  #     - TOPIC="simak4.unpak_simak.m_program_studi"
-  #     - TABLE="m_program_studi_simak"
-  #   networks:
-  #     - minio-sample
+  simonevconsume_m_program_studi:
+    image: adamilkom00/simonevconsume_m_program_studi:0.0.1
+    container_name: simonevconsume_m_program_studi
+    restart: unless-stopped
+    environment:
+      - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
+      - BROKERS=kafka:29092
+      - GROUP_ID="m_program_studi_consumeto_simonev"
+      - TOPIC="simak4.unpak_simak.m_program_studi"
+      - TABLE="m_program_studi_simak"
+    networks:
+      - minio-sample
 
   # simonevconsume_pengguna:
   #   build:
