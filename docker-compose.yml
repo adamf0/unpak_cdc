@@ -75,6 +75,8 @@ services:
       - GROUP_ID=user_consumeto_simonev
       - TOPIC=simak1.unpak_simak.user
       - TABLE=user_simak
+    depends_on:
+      - kafka
     networks:
       - minio-sample
 
@@ -88,6 +90,8 @@ services:
       - GROUP_ID=m_fakultas_consumeto_simonev
       - TOPIC=simak2.unpak_simak.m_fakultas
       - TABLE=m_fakultas_simak
+    depends_on:
+      - kafka
     networks:
       - minio-sample
 
@@ -101,6 +105,8 @@ services:
       - GROUP_ID=r_prodi_consumeto_simonev
       - TOPIC=simak3.unpak_simak.r_prodi
       - TABLE=r_prodi_simak
+    depends_on:
+      - kafka
     networks:
       - minio-sample
 
@@ -114,6 +120,8 @@ services:
       - GROUP_ID=m_program_studi_consumeto_simonev
       - TOPIC=simak4.unpak_simak.m_program_studi
       - TABLE=m_program_studi_simak
+    depends_on:
+      - kafka
     networks:
       - minio-sample
 
@@ -127,6 +135,8 @@ services:
       - GROUP_ID=pengguna_consumeto_simonev
       - TOPIC=simpeg7.unpak_simpeg.pengguna
       - TABLE=pengguna_simpeg
+    depends_on:
+      - kafka
     networks:
       - minio-sample
 
@@ -140,6 +150,8 @@ services:
       - GROUP_ID=e_pribadi_consumeto_simonev
       - TOPIC=simpeg8.unpak_simpeg.e_pribadi
       - TABLE=e_pribadi_simpeg
+    depends_on:
+      - kafka
     networks:
       - minio-sample
 
@@ -153,6 +165,8 @@ services:
       - GROUP_ID=n_pribadi_consumeto_simonev
       - TOPIC=simpeg9.unpak_simpeg.n_pribadi
       - TABLE=n_pribadi_simpeg
+    depends_on:
+      - kafka
     networks:
       - minio-sample
 
@@ -166,6 +180,8 @@ services:
       - GROUP_ID=n_pengangkatan_consumeto_simonev
       - TOPIC=simpeg10.unpak_simpeg.n_pengangkatan
       - TABLE=n_pengangkatan_simpeg
+    depends_on:
+      - kafka
     networks:
       - minio-sample
 
@@ -179,6 +195,8 @@ services:
       - GROUP_ID=payroll_m_pegawai_consumeto_simonev
       - TOPIC=simpeg11.unpak_simpeg.payroll_m_pegawai
       - TABLE=payroll_m_pegawai_simpeg
+    depends_on:
+      - kafka
     networks:
       - minio-sample
 
