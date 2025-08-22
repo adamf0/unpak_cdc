@@ -1,0 +1,13 @@
+docker exec -it cdc-kafka-1 bash
+
+kafka-consumer-groups \
+   --bootstrap-server localhost:9092 \
+   --list
+
+kafka-consumer-groups \
+  --bootstrap-server localhost:9092 \
+  --group payroll_m_pegawai_consumeto_simonev \
+  --topic simpeg11.unpak_simpeg.payroll_m_pegawai \
+  --reset-offsets \
+  --to-earliest \
+  --execute
