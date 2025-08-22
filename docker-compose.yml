@@ -124,9 +124,9 @@ services:
     environment:
       - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
       - BROKERS=kafka:29092
-      - GROUP_ID="pengguna_consumeto_simonev"
-      - TOPIC="simpeg7.unpak_simpeg.pengguna"
-      - TABLE="pengguna_simpeg"
+      - GROUP_ID=pengguna_consumeto_simonev
+      - TOPIC=simpeg7.unpak_simpeg.pengguna
+      - TABLE=pengguna_simpeg
     networks:
       - minio-sample
 
@@ -137,9 +137,9 @@ services:
     environment:
       - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
       - BROKERS=kafka:29092
-      - GROUP_ID="e_pribadi_consumeto_simonev"
-      - TOPIC="simpeg8.unpak_simpeg.e_pribadi"
-      - TABLE="e_pribadi_simpeg"
+      - GROUP_ID=e_pribadi_consumeto_simonev
+      - TOPIC=simpeg8.unpak_simpeg.e_pribadi
+      - TABLE=e_pribadi_simpeg
     networks:
       - minio-sample
 
@@ -150,9 +150,9 @@ services:
     environment:
       - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
       - BROKERS=kafka:29092
-      - GROUP_ID="n_pribadi_consumeto_simonev"
-      - TOPIC="simpeg9.unpak_simpeg.n_pribadi"
-      - TABLE="n_pribadi_simpeg"
+      - GROUP_ID=n_pribadi_consumeto_simonev
+      - TOPIC=simpeg9.unpak_simpeg.n_pribadi
+      - TABLE=n_pribadi_simpeg
     networks:
       - minio-sample
 
@@ -163,9 +163,9 @@ services:
     environment:
       - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
       - BROKERS=kafka:29092
-      - GROUP_ID="n_pengangkatan_consumeto_simonev"
-      - TOPIC="simpeg10.unpak_simpeg.n_pengangkatan"
-      - TABLE="n_pengangkatan_simpeg"
+      - GROUP_ID=n_pengangkatan_consumeto_simonev
+      - TOPIC=simpeg10.unpak_simpeg.n_pengangkatan
+      - TABLE=n_pengangkatan_simpeg
     networks:
       - minio-sample
 
