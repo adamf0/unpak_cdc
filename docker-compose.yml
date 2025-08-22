@@ -105,7 +105,7 @@ services:
       - minio-sample
 
   simonevconsume_m_program_studi:
-    image: adamilkom00/simonevconsume_m_program_studi:0.0.1
+    image: adamilkom00/simonevconsume_m_program_studi:0.0.2
     container_name: simonevconsume_m_program_studi
     restart: unless-stopped
     environment:

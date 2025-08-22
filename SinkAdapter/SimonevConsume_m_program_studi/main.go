@@ -176,7 +176,7 @@ func insertProdi(db *sql.DB, tbl string, f *Prodi) error {
 			status_prodi=VALUES(status_prodi)
 	`, tbl)
 
-	_, err := db.Exec(query, f.KodeProdi, f.NamaProdi)
+	_, err := db.Exec(query, f.KodeProdi, f.NamaProdi, f.KodeFak, f.KodeJenjang, f.KodeJurusan, f.StatusProdi)
 	return err
 }
 
@@ -192,13 +192,13 @@ func updateProdi(db *sql.DB, tbl string, f *Prodi) error {
 		WHERE kode_prodi=?
 	`, tbl)
 
-	_, err := db.Exec(query, f.NamaProdi, f.KodeProdi)
+	_, err := db.Exec(query, f.NamaProdi, f.KodeFak, f.KodeJenjang, f.KodeJurusan, f.StatusProdi, f.KodeProdi)
 	return err
 }
 
 // Delete m_program_studi
-func deleteProdi(db *sql.DB, tbl string, kodeProdi string) error {
+func deleteProdi(db *sql.DB, tbl string, KodeProdi string) error {
 	query := fmt.Sprintf(`DELETE FROM %s WHERE kode_prodi=?`, tbl)
-	_, err := db.Exec(query, kodeProdi)
+	_, err := db.Exec(query, KodeProdi)
 	return err
 }
