@@ -29,8 +29,8 @@ type PayrollMPegawai struct {
 	Fungsional string     `json:"fungsional"`
 	Golongan   string     `json:"golongan"`
 	Status     string     `json:"status"`
-	TglMasuk   *time.Time `json:"tgl_masuk"`
-	TglKeluar  *time.Time `json:"tgl_keluar"`
+	TglMasuk   string `json:"tgl_masuk"`
+	TglKeluar  string `json:"tgl_keluar"`
 }
 
 // DebeziumPayload untuk field "payload" dari Kafka message
