@@ -173,7 +173,7 @@ func insertPengguna(db *sql.DB, tbl string, f *Pengguna) error {
 			status=VALUES(status)
 	`, tbl)
 
-	_, err := db.Exec(query, u.Id, u.Username, u.Password, u.Level, u.Status)
+	_, err := db.Exec(query, f.Id, f.Username, f.Password, f.Level, f.Status)
 	return err
 }
 
@@ -188,7 +188,7 @@ func updatePengguna(db *sql.DB, tbl string, f *Pengguna) error {
 		WHERE id=?
 	`, tbl)
 
-	_, err := db.Exec(query, u.Username, u.Password, u.Level, u.Status, u.Id)
+	_, err := db.Exec(query, f.Username, f.Password, f.Level, f.Status, f.Id)
 	return err
 }
 
