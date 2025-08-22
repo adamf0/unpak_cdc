@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
