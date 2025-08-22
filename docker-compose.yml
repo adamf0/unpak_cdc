@@ -170,7 +170,7 @@ services:
       - minio-sample
 
   simonevconsume_payroll_m_pegawai:
-    image: adamilkom00/simonevconsume_payroll_m_pegawai:0.0.2
+    image: adamilkom00/simonevconsume_payroll_m_pegawai:0.0.3
     container_name: simonevconsume_payroll_m_pegawai
     restart: unless-stopped
     environment:

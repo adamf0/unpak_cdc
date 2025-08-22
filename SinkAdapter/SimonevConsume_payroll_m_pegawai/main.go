@@ -8,45 +8,69 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"syscall"
 	"strings"
+	"syscall"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/IBM/sarama"
 )
 
-// PayrollMPegawai struct sesuai dengan struktur tabel `payroll_m_pegawai`
-type PayrollMPegawai struct {
-	Id         int        `json:"id_pegawai"`
-	NoMesin    string     `json:"no_mesin"`
-	NIP        string     `json:"nip"`
-	Nama       string     `json:"nama"`
-	JK         string     `json:"jk"`
-	Fakultas   string     `json:"fakultas"`
-	Prodi      string     `json:"prodi"`
-	Struktural string     `json:"struktural"`
-	Fungsional string     `json:"fungsional"`
-	Golongan   string     `json:"golongan"`
-	Status     string     `json:"status"`
-	TglMasuk   string `json:"tgl_masuk"`
-	TglKeluar  string `json:"tgl_keluar"`
+// Custom type untuk Debezium date (int32 days since 1970-01-01)
+type DebeziumDate struct {
+	Time  *time.Time
+	Valid bool
 }
 
-// DebeziumPayload untuk field "payload" dari Kafka message
+func (d *DebeziumDate) UnmarshalJSON(b []byte) error {
+	s := strings.TrimSpace(string(b))
+	if s == "null" || s == "" {
+		d.Time = nil
+		d.Valid = false
+		return nil
+	}
+
+	var days int32
+	if err := json.Unmarshal(b, &days); err != nil {
+		return err
+	}
+
+	t := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC).AddDate(0, 0, int(days))
+	d.Time = &t
+	d.Valid = true
+	return nil
+}
+
+// PayrollMPegawai struct sesuai tabel payroll_m_pegawai
+type PayrollMPegawai struct {
+	Id         int           `json:"id_pegawai"`
+	NoMesin    string        `json:"no_mesin"`
+	NIP        string        `json:"nip"`
+	Nama       string        `json:"nama"`
+	JK         string        `json:"jk"`
+	Fakultas   string        `json:"fakultas"`
+	Prodi      string        `json:"prodi"`
+	Struktural string        `json:"struktural"`
+	Fungsional string        `json:"fungsional"`
+	Golongan   string        `json:"golongan"`
+	Status     string        `json:"status"`
+	TglMasuk   DebeziumDate  `json:"tgl_masuk"`
+	TglKeluar  *string       `json:"tgl_keluar"`
+}
+
+// DebeziumPayload untuk Kafka payload
 type DebeziumPayload struct {
 	Before *PayrollMPegawai `json:"before"`
 	After  *PayrollMPegawai `json:"after"`
 	Op     string           `json:"op"` // c=create, u=update, d=delete, r=read(snapshot)
 }
 
-// KafkaMessage mencakup payload di dalam JSON root
+// KafkaMessage root
 type KafkaMessage struct {
 	Payload DebeziumPayload `json:"payload"`
 }
 
 func main() {
-	// Koneksi database
-	// dsn := "cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
 	dsn := os.Getenv("DSN")
 	if dsn == "" {
 		log.Fatal("DSN environment variable not set")
@@ -63,21 +87,17 @@ func main() {
 	}
 	fmt.Println("Connected to MariaDB!")
 
-	// Kafka config
-	// brokers := []string{"localhost:9092"}
 	brokersEnv := os.Getenv("BROKERS")
 	if brokersEnv == "" {
 		log.Fatal("BROKERS environment variable not set")
 	}
 	brokers := strings.Split(brokersEnv, ",")
-	
-	// groupID := "n_pribadi-consumeto-simonev"
+
 	groupID := os.Getenv("GROUP_ID")
 	if groupID == "" {
 		log.Fatal("GROUP_ID environment variable not set")
 	}
 
-	// topic := "simpeg2.unpak_simpeg.n_pribadi"
 	topic := os.Getenv("TOPIC")
 	if topic == "" {
 		log.Fatal("TOPIC environment variable not set")
@@ -129,6 +149,7 @@ type ConsumerGroupHandler struct {
 
 func (ConsumerGroupHandler) Setup(sarama.ConsumerGroupSession) error   { return nil }
 func (ConsumerGroupHandler) Cleanup(sarama.ConsumerGroupSession) error { return nil }
+
 func (h ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
 		var km KafkaMessage
@@ -137,25 +158,24 @@ func (h ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, 
 			continue
 		}
 
-		// tbl := "n_pribadi_simpeg"
 		payload := km.Payload
 
 		switch payload.Op {
-		case "c", "r": // INSERT atau SNAPSHOT/READ
+		case "c", "r":
 			if payload.After != nil {
 				fmt.Printf("(%s) Inserted PayrollMPegawai: %+v\n", payload.Op, payload.After)
 				if err := insertPayrollMPegawai(h.db, h.table, payload.After); err != nil {
 					log.Printf("Insert error: %v", err)
 				}
 			}
-		case "u": // UPDATE
+		case "u":
 			if payload.After != nil {
 				fmt.Printf("(%s) Updated PayrollMPegawai: %+v\n", payload.Op, payload.After)
 				if err := updatePayrollMPegawai(h.db, h.table, payload.After); err != nil {
 					log.Printf("Update error: %v", err)
 				}
 			}
-		case "d": // DELETE
+		case "d":
 			if payload.Before != nil {
 				fmt.Printf("(%s) Deleted PayrollMPegawai: %+v\n", payload.Op, payload.Before)
 				if err := deletePayrollMPegawai(h.db, h.table, payload.Before.Id); err != nil {
@@ -169,10 +189,10 @@ func (h ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, 
 	return nil
 }
 
-// Insert PayrollMPegawai
+// INSERT dengan upsert
 func insertPayrollMPegawai(db *sql.DB, tbl string, f *PayrollMPegawai) error {
 	query := fmt.Sprintf(`
-		INSERT INTO %s 
+		INSERT INTO %s
 		(id_pegawai, no_mesin, nip, nama, jk, fakultas, prodi, struktural, fungsional, golongan, status, tgl_masuk, tgl_keluar)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE
@@ -190,14 +210,20 @@ func insertPayrollMPegawai(db *sql.DB, tbl string, f *PayrollMPegawai) error {
 			tgl_keluar=VALUES(tgl_keluar)
 	`, tbl)
 
+	var tglMasuk interface{}
+	if f.TglMasuk.Valid {
+		tglMasuk = f.TglMasuk.Time
+	}
+
 	_, err := db.Exec(query,
 		f.Id, f.NoMesin, f.NIP, f.Nama, f.JK, f.Fakultas, f.Prodi,
-		f.Struktural, f.Fungsional, f.Golongan, f.Status, f.TglMasuk, f.TglKeluar,
+		f.Struktural, f.Fungsional, f.Golongan, f.Status,
+		tglMasuk, f.TglKeluar,
 	)
 	return err
 }
 
-// Update PayrollMPegawai
+// UPDATE
 func updatePayrollMPegawai(db *sql.DB, tbl string, f *PayrollMPegawai) error {
 	query := fmt.Sprintf(`
 		UPDATE %s SET
@@ -216,15 +242,21 @@ func updatePayrollMPegawai(db *sql.DB, tbl string, f *PayrollMPegawai) error {
 		WHERE id_pegawai=?
 	`, tbl)
 
+	var tglMasuk interface{}
+	if f.TglMasuk.Valid {
+		tglMasuk = f.TglMasuk.Time
+	}
+
 	_, err := db.Exec(query,
 		f.NoMesin, f.NIP, f.Nama, f.JK, f.Fakultas, f.Prodi,
-		f.Struktural, f.Fungsional, f.Golongan, f.Status, f.TglMasuk, f.TglKeluar,
+		f.Struktural, f.Fungsional, f.Golongan, f.Status,
+		tglMasuk, f.TglKeluar,
 		f.Id,
 	)
 	return err
 }
 
-// Delete PayrollMPegawai
+// DELETE
 func deletePayrollMPegawai(db *sql.DB, tbl string, id int) error {
 	query := fmt.Sprintf(`DELETE FROM %s WHERE id_pegawai=?`, tbl)
 	_, err := db.Exec(query, id)
