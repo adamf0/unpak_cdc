@@ -1,0 +1,197 @@
+package main
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"log"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/IBM/sarama"
+)
+
+// Mahasiswa struct sesuai dengan struktur tabel `mahasiswa`
+type Mahasiswa struct {
+	NIM           string `json:"NIM"`
+	KodeFak       string `json:"kode_fak"`
+	KodeJurusan   string `json:"kode_jurusan"`
+	KodeJenjang   string `json:"kode_jenjang"`
+	KodeProdi     string `json:"kode_prodi"`
+	NamaMahasiswa string `json:"nama_mahasiswa"`
+	StatusAktif   string `json:"status_aktif"`
+}
+
+// DebeziumPayload untuk field "payload" dari Kafka message
+type DebeziumPayload struct {
+	Before *Mahasiswa `json:"before"`
+	After  *Mahasiswa `json:"after"`
+	Op     string     `json:"op"` // c=create, u=update, d=delete, r=read(snapshot)
+}
+
+// KafkaMessage mencakup payload di dalam JSON root
+type KafkaMessage struct {
+	Payload DebeziumPayload `json:"payload"`
+}
+
+func main() {
+	// DSN dari env
+	dsn := os.Getenv("DSN")
+	if dsn == "" {
+		log.Fatal("DSN environment variable not set")
+	}
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Database ping failed: %v", err)
+	}
+	fmt.Println("Connected to MariaDB!")
+
+	// Kafka config
+	brokersEnv := os.Getenv("BROKERS")
+	if brokersEnv == "" {
+		log.Fatal("BROKERS environment variable not set")
+	}
+	brokers := strings.Split(brokersEnv, ",")
+
+	groupID := os.Getenv("GROUP_ID")
+	if groupID == "" {
+		log.Fatal("GROUP_ID environment variable not set")
+	}
+
+	topic := os.Getenv("TOPIC")
+	if topic == "" {
+		log.Fatal("TOPIC environment variable not set")
+	}
+
+	tbl := os.Getenv("TABLE")
+	if tbl == "" {
+		log.Fatal("TABLE environment variable not set")
+	}
+
+	config := sarama.NewConfig()
+	config.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategyRoundRobin
+	config.Version = sarama.V3_4_0_0
+	config.Consumer.Offsets.Initial = sarama.OffsetOldest
+
+	consumerGroup, err := sarama.NewConsumerGroup(brokers, groupID, config)
+	if err != nil {
+		log.Fatalf("Error creating consumer group: %v", err)
+	}
+	defer consumerGroup.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		sigterm := make(chan os.Signal, 1)
+		signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
+		<-sigterm
+		cancel()
+	}()
+
+	handler := ConsumerGroupHandler{topic: topic, db: db, table: tbl}
+
+	for {
+		if err := consumerGroup.Consume(ctx, []string{topic}, handler); err != nil {
+			log.Fatalf("Error consuming: %v", err)
+		}
+		if ctx.Err() != nil {
+			return
+		}
+	}
+}
+
+type ConsumerGroupHandler struct {
+	topic string
+	db    *sql.DB
+	table string
+}
+
+func (ConsumerGroupHandler) Setup(sarama.ConsumerGroupSession) error   { return nil }
+func (ConsumerGroupHandler) Cleanup(sarama.ConsumerGroupSession) error { return nil }
+
+func (h ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	for msg := range claim.Messages() {
+		var km KafkaMessage
+		if err := json.Unmarshal(msg.Value, &km); err != nil {
+			log.Printf("Error unmarshalling message: %v", err)
+			continue
+		}
+
+		payload := km.Payload
+
+		switch payload.Op {
+		case "c", "r": // INSERT atau SNAPSHOT/READ
+			if payload.After != nil {
+				fmt.Printf("(%s) Inserted Mahasiswa: %+v\n", payload.Op, payload.After)
+				if err := insertMahasiswa(h.db, h.table, payload.After); err != nil {
+					log.Printf("Insert error: %v", err)
+				}
+			}
+		case "u": // UPDATE
+			if payload.After != nil {
+				fmt.Printf("(%s) Updated Mahasiswa: %+v\n", payload.Op, payload.After)
+				if err := updateMahasiswa(h.db, h.table, payload.After); err != nil {
+					log.Printf("Update error: %v", err)
+				}
+			}
+		case "d": // DELETE
+			if payload.Before != nil {
+				fmt.Printf("(%s) Deleted Mahasiswa: %+v\n", payload.Op, payload.Before)
+				if err := deleteMahasiswa(h.db, h.table, payload.Before.NIM); err != nil {
+					log.Printf("Delete error: %v", err)
+				}
+			}
+		}
+
+		session.MarkMessage(msg, "")
+	}
+	return nil
+}
+
+// Insert Mahasiswa
+func insertMahasiswa(db *sql.DB, tbl string, m *Mahasiswa) error {
+	query := fmt.Sprintf(`
+		INSERT INTO %s (NIM, kode_fak, kode_jurusan, kode_jenjang, kode_prodi, nama_mahasiswa, status_aktif)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+			kode_fak = VALUES(kode_fak),
+			kode_jurusan = VALUES(kode_jurusan),
+			kode_jenjang = VALUES(kode_jenjang),
+			kode_prodi = VALUES(kode_prodi),
+			nama_mahasiswa = VALUES(nama_mahasiswa),
+			status_aktif = VALUES(status_aktif)
+	`, tbl)
+
+	_, err := db.Exec(query, m.NIM, m.KodeFak, m.KodeJurusan, m.KodeJenjang, m.KodeProdi, m.NamaMahasiswa, m.StatusAktif)
+	return err
+}
+
+// Update Mahasiswa
+func updateMahasiswa(db *sql.DB, tbl string, m *Mahasiswa) error {
+	query := fmt.Sprintf(`
+		UPDATE %s
+		SET kode_fak = ?, kode_jurusan = ?, kode_jenjang = ?, kode_prodi = ?, nama_mahasiswa = ?, status_aktif = ?
+		WHERE NIM = ?
+	`, tbl)
+
+	_, err := db.Exec(query, m.KodeFak, m.KodeJurusan, m.KodeJenjang, m.KodeProdi, m.NamaMahasiswa, m.StatusAktif, m.NIM)
+	return err
+}
+
+// Delete Mahasiswa
+func deleteMahasiswa(db *sql.DB, tbl string, NIM string) error {
+	query := fmt.Sprintf(`DELETE FROM %s WHERE NIM=?`, tbl)
+	_, err := db.Exec(query, NIM)
+	return err
+}

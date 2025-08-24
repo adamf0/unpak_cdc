@@ -125,6 +125,36 @@ services:
     networks:
       - minio-sample
 
+  simonevconsume_m_dosen:
+    image: adamilkom00/simonevconsume_m_dosen:0.0.1
+    container_name: simonevconsume_m_dosen
+    restart: unless-stopped
+    environment:
+      - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
+      - BROKERS=kafka:29092
+      - GROUP_ID=m_dosen_consumeto_simonev
+      - TOPIC=simak5.unpak_simak.m_dosen
+      - TABLE=m_dosen_simak
+    depends_on:
+      - kafka
+    networks:
+      - minio-sample
+
+  simonevconsume_m_mahasiswa:
+    image: adamilkom00/simonevconsume_m_mahasiswa:0.0.1
+    container_name: simonevconsume_m_mahasiswa
+    restart: unless-stopped
+    environment:
+      - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
+      - BROKERS=kafka:29092
+      - GROUP_ID=m_mahasiswa_consumeto_simonev
+      - TOPIC=simak6.unpak_simak.m_mahasiswa
+      - TABLE=m_mahasiswa_simak
+    depends_on:
+      - kafka
+    networks:
+      - minio-sample
+
   simonevconsume_pengguna:
     image: adamilkom00/simonevconsume_pengguna:0.0.1
     container_name: simonevconsume_pengguna
