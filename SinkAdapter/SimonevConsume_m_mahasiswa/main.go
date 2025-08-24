@@ -24,6 +24,7 @@ type Mahasiswa struct {
 	KodeProdi     string `json:"kode_prodi"`
 	NamaMahasiswa string `json:"nama_mahasiswa"`
 	StatusAktif   string `json:"status_aktif"`
+	TahunMasuk    string `json:"tahun_masuk"`
 }
 
 // DebeziumPayload untuk field "payload" dari Kafka message
@@ -162,18 +163,19 @@ func (h ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, 
 // Insert Mahasiswa
 func insertMahasiswa(db *sql.DB, tbl string, m *Mahasiswa) error {
 	query := fmt.Sprintf(`
-		INSERT INTO %s (NIM, kode_fak, kode_jurusan, kode_jenjang, kode_prodi, nama_mahasiswa, status_aktif)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO %s (NIM, kode_fak, kode_jurusan, kode_jenjang, kode_prodi, nama_mahasiswa, status_aktif, tahun_masuk)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE
 			kode_fak = VALUES(kode_fak),
 			kode_jurusan = VALUES(kode_jurusan),
 			kode_jenjang = VALUES(kode_jenjang),
 			kode_prodi = VALUES(kode_prodi),
 			nama_mahasiswa = VALUES(nama_mahasiswa),
-			status_aktif = VALUES(status_aktif)
+			status_aktif = VALUES(status_aktif),
+			tahun_masuk = VALUES(tahun_masuk)
 	`, tbl)
 
-	_, err := db.Exec(query, m.NIM, m.KodeFak, m.KodeJurusan, m.KodeJenjang, m.KodeProdi, m.NamaMahasiswa, m.StatusAktif)
+	_, err := db.Exec(query, m.NIM, m.KodeFak, m.KodeJurusan, m.KodeJenjang, m.KodeProdi, m.NamaMahasiswa, m.StatusAktif, m.TahunMasuk)
 	return err
 }
 
@@ -181,11 +183,11 @@ func insertMahasiswa(db *sql.DB, tbl string, m *Mahasiswa) error {
 func updateMahasiswa(db *sql.DB, tbl string, m *Mahasiswa) error {
 	query := fmt.Sprintf(`
 		UPDATE %s
-		SET kode_fak = ?, kode_jurusan = ?, kode_jenjang = ?, kode_prodi = ?, nama_mahasiswa = ?, status_aktif = ?
+		SET kode_fak = ?, kode_jurusan = ?, kode_jenjang = ?, kode_prodi = ?, nama_mahasiswa = ?, status_aktif = ?, tahun_masuk = ?
 		WHERE NIM = ?
 	`, tbl)
 
-	_, err := db.Exec(query, m.KodeFak, m.KodeJurusan, m.KodeJenjang, m.KodeProdi, m.NamaMahasiswa, m.StatusAktif, m.NIM)
+	_, err := db.Exec(query, m.KodeFak, m.KodeJurusan, m.KodeJenjang, m.KodeProdi, m.NamaMahasiswa, m.StatusAktif, m.TahunMasuk, m.NIM)
 	return err
 }
 

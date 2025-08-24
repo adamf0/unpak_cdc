@@ -141,7 +141,7 @@ services:
       - minio-sample
 
   simonevconsume_m_mahasiswa:
-    image: adamilkom00/simonevconsume_m_mahasiswa:0.0.1
+    image: adamilkom00/simonevconsume_m_mahasiswa:0.0.2
     container_name: simonevconsume_m_mahasiswa
     restart: unless-stopped
     environment:
