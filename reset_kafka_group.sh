@@ -24,16 +24,16 @@ echo "$TOPICS"
 read -p "Masukkan nama topic: " TOPIC
 
 # --- Step 4: Pilih consumer group (ambil daftar dari container) ---
-echo "Mengambil daftar consumer group untuk topic '$TOPIC'..."
-GROUPS=$(docker exec "$CONTAINER" bash -c "kafka-consumer-groups --bootstrap-server $BOOTSTRAP_SERVER --list 2>/dev/null" | awk '{print $1}' | grep -v "^$" | grep -v "GROUP")
+# echo "Mengambil daftar consumer group untuk topic '$TOPIC'..."
+# GROUPS=$(docker exec "$CONTAINER" bash -c "kafka-consumer-groups --bootstrap-server $BOOTSTRAP_SERVER --list 2>/dev/null" | awk '{print $1}' | grep -v "^$" | grep -v "GROUP")
 
-if [ -z "$GROUPS" ]; then
-    echo "Gagal mengambil consumer group dari Kafka."
-    exit 1
-fi
+# if [ -z "$GROUPS" ]; then
+#     echo "Gagal mengambil consumer group dari Kafka."
+#     exit 1
+# fi
 
-echo "Daftar consumer group:"
-echo "$GROUPS"
+# echo "Daftar consumer group:"
+# echo "$GROUPS"
 read -p "Masukkan nama consumer group: " GROUP
 
 # --- Step 5: Konfirmasi sebelum eksekusi ---
