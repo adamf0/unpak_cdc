@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -219,21 +218,25 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 			NamaProdi:    namaProdi,
 		}
 
-		q := `INSERT INTO dosen_joined 
-		      (nidn, nip_lama, nip_baru, kode_jurusan, kode_jenjang, nama_dosen, kode_fak, nama_fakultas, kode_prodi, nama_prodi)
-		      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		      ON DUPLICATE KEY UPDATE
-		        nip_lama=VALUES(nip_lama),
-		        nip_baru=VALUES(nip_baru),
-		        kode_jurusan=VALUES(kode_jurusan),
-		        kode_jenjang=VALUES(kode_jenjang),
-		        nama_dosen=VALUES(nama_dosen),
-		        kode_fak=VALUES(kode_fak),
-		        nama_fakultas=VALUES(nama_fakultas),
-		        kode_prodi=VALUES(kode_prodi),
-		        nama_prodi=VALUES(nama_prodi)`
+		// q := `INSERT INTO dosen_joined 
+		//       (nidn, nip_lama, nip_baru, kode_jurusan, kode_jenjang, nama_dosen, kode_fak, nama_fakultas, kode_prodi, nama_prodi)
+		//       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		//       ON DUPLICATE KEY UPDATE
+		//         nip_lama=VALUES(nip_lama),
+		//         nip_baru=VALUES(nip_baru),
+		//         kode_jurusan=VALUES(kode_jurusan),
+		//         kode_jenjang=VALUES(kode_jenjang),
+		//         nama_dosen=VALUES(nama_dosen),
+		//         kode_fak=VALUES(kode_fak),
+		//         nama_fakultas=VALUES(nama_fakultas),
+		//         kode_prodi=VALUES(kode_prodi),
+		//         nama_prodi=VALUES(nama_prodi)`
 
-		fmt.Println("Upsert:\n" + q)
+		if b, err := json.MarshalIndent(d, "", "  "); err == nil {
+			fmt.Println("Upsert:\n" + string(b))
+		} else{
+			log.Printf("❌ Upsert: %v", err)
+		}
 		// if _, err := dbSQL.Exec(q,
 		// 	d.NIDN, d.NIPLama, d.NIPBaru, d.KodeJurusan, d.KodeJenjang, d.NamaDosen,
 		// 	d.KodeFak, d.NamaFakultas, d.KodeProdi, d.NamaProdi,
@@ -245,9 +248,9 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 	} else if before.Exists() {
 		*op = "DOSEN_DELETE"
 		nidn := before.Get("NIDN").String()
-		q := `DELETE FROM dosen_joined WHERE nidn=?`
+		// q := `DELETE FROM dosen_joined WHERE nidn=?`
 
-		fmt.Println("Delete:\n" + q)
+		fmt.Println("Delete:\n" + nidn)
 		// if _, err := dbSQL.Exec(q, nidn); err != nil {
 		// 	log.Printf("❌ delete dosen: %v", err)
 		// } else {
