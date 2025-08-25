@@ -28,7 +28,7 @@ var (
 )
 
 const (
-	defaultBrokers    = "localhost:29092"
+	defaultBrokers    = "localhost:9092"
 	defaultTopicFak   = "simak2.unpak_simak.m_fakultas"
 	defaultTopicProdi = "simak4.unpak_simak.m_program_studi"
 	defaultTopicDosen = "simak5.unpak_simak.m_dosen"
