@@ -8,11 +8,12 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"syscall"
 	"strings"
+	"syscall"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/IBM/sarama"
+	"github.com/redis/go-redis/v9"
 )
 
 // Fakultas struct sesuai dengan struktur tabel `fakultas`
@@ -35,7 +36,6 @@ type KafkaMessage struct {
 
 func main() {
 	// Koneksi database
-	// dsn := "cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true&loc=Local"
 	dsn := os.Getenv("DSN")
 	if dsn == "" {
 		log.Fatal("DSN environment variable not set")
@@ -52,21 +52,30 @@ func main() {
 	}
 	fmt.Println("Connected to MariaDB!")
 
+	// Koneksi Redis
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("REDIS_ADDR"), // contoh: localhost:6379
+		Password: os.Getenv("REDIS_PASS"), // "" kalau tanpa password
+		DB:       0,
+	})
+
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+	fmt.Println("Connected to Redis!")
+
 	// Kafka config
-	// brokers := []string{"localhost:9092"}
 	brokersEnv := os.Getenv("BROKERS")
 	if brokersEnv == "" {
 		log.Fatal("BROKERS environment variable not set")
 	}
 	brokers := strings.Split(brokersEnv, ",")
 
-	// groupID := "m_fakultas-consumeto-simonev"
 	groupID := os.Getenv("GROUP_ID")
 	if groupID == "" {
 		log.Fatal("GROUP_ID environment variable not set")
 	}
 
-	// topic := "simak2.unpak_simak.m_fakultas"
 	topic := os.Getenv("TOPIC")
 	if topic == "" {
 		log.Fatal("TOPIC environment variable not set")
@@ -98,7 +107,12 @@ func main() {
 		cancel()
 	}()
 
-	handler := ConsumerGroupHandler{topic: topic, db: db, table: tbl}
+	handler := ConsumerGroupHandler{
+		topic: topic,
+		db:    db,
+		table: tbl,
+		rdb:   rdb,
+	}
 
 	for {
 		if err := consumerGroup.Consume(ctx, []string{topic}, handler); err != nil {
@@ -114,12 +128,15 @@ type ConsumerGroupHandler struct {
 	topic string
 	db    *sql.DB
 	table string
+	rdb   *redis.Client
 }
 
 func (ConsumerGroupHandler) Setup(sarama.ConsumerGroupSession) error   { return nil }
 func (ConsumerGroupHandler) Cleanup(sarama.ConsumerGroupSession) error { return nil }
 
 func (h ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	ctx := context.Background()
+
 	for msg := range claim.Messages() {
 		var km KafkaMessage
 		if err := json.Unmarshal(msg.Value, &km); err != nil {
@@ -127,14 +144,16 @@ func (h ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, 
 			continue
 		}
 
-		// tbl := "m_fakultas_simak";
 		payload := km.Payload
 		switch payload.Op {
-		case "c", "r": // INSERT atau SNAPSHOT/READ
+		case "c", "r": // INSERT / SNAPSHOT
 			if payload.After != nil {
 				fmt.Printf("(%s) Inserted fakultas: %+v\n", payload.Op, payload.After)
 				if err := insertFakultas(h.db, h.table, payload.After); err != nil {
 					log.Printf("Insert error: %v", err)
+				}
+				if err := saveToRedis(ctx, h.rdb, payload.After); err != nil {
+					log.Printf("Redis insert error: %v", err)
 				}
 			}
 		case "u": // UPDATE
@@ -143,12 +162,18 @@ func (h ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, 
 				if err := updateFakultas(h.db, h.table, payload.After); err != nil {
 					log.Printf("Update error: %v", err)
 				}
+				if err := saveToRedis(ctx, h.rdb, payload.After); err != nil {
+					log.Printf("Redis update error: %v", err)
+				}
 			}
 		case "d": // DELETE
 			if payload.Before != nil {
 				fmt.Printf("(%s) Deleted fakultas: %+v\n", payload.Op, payload.Before)
 				if err := deleteFakultas(h.db, h.table, payload.Before.KodeFakultas); err != nil {
 					log.Printf("Delete error: %v", err)
+				}
+				if err := deleteFromRedis(ctx, h.rdb, payload.Before.KodeFakultas); err != nil {
+					log.Printf("Redis delete error: %v", err)
 				}
 			}
 		}
@@ -188,4 +213,45 @@ func deleteFakultas(db *sql.DB, tbl string, kodeFakultas string) error {
 	query := fmt.Sprintf(`DELETE FROM %s WHERE kode_fakultas=?`, tbl)
 	_, err := db.Exec(query, kodeFakultas)
 	return err
+}
+
+// Save / update Fakultas ke Redis (dengan cek exist)
+func saveToRedis(ctx context.Context, rdb *redis.Client, f *Fakultas) error {
+	key := "fakultas#" + f.KodeFakultas
+
+	exists, err := rdb.Exists(ctx, key).Result()
+	if err != nil {
+		return err
+	}
+
+	data, err := json.Marshal(f)
+	if err != nil {
+		return err
+	}
+
+	if exists > 0 {
+		fmt.Printf("Redis update key=%s\n", key)
+		return rdb.Set(ctx, key, data, 0).Err()
+	} else {
+		fmt.Printf("Redis insert key=%s\n", key)
+		return rdb.Set(ctx, key, data, 0).Err()
+	}
+}
+
+// Delete Fakultas dari Redis (dengan cek exist)
+func deleteFromRedis(ctx context.Context, rdb *redis.Client, kode string) error {
+	key := "fakultas#" + kode
+
+	exists, err := rdb.Exists(ctx, key).Result()
+	if err != nil {
+		return err
+	}
+
+	if exists > 0 {
+		fmt.Printf("Redis delete key=%s\n", key)
+		return rdb.Del(ctx, key).Err()
+	}
+
+	fmt.Printf("Redis key=%s not found, skip delete\n", key)
+	return nil
 }

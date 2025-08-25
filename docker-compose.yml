@@ -65,6 +65,17 @@ services:
     networks:
       - minio-sample
 
+  redis:
+    image: cgr.dev/chainguard/redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data   # ✅ folder lokal di project
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "always"] # ✅ aktifkan AOF supaya durable
+    networks:
+      - minio-sample
+
   simonevconsume_user:
     image: adamilkom00/simonevconsume_user:0.0.2
     container_name: simonevconsume_user
@@ -81,7 +92,7 @@ services:
       - minio-sample
 
   simonevconsume_m_fakultas:
-    image: adamilkom00/simonevconsume_m_fakultas:0.0.1
+    image: adamilkom00/simonevconsume_m_fakultas:0.0.2
     container_name: simonevconsume_m_fakultas
     restart: unless-stopped
     environment:
@@ -90,8 +101,11 @@ services:
       - GROUP_ID=m_fakultas_consumeto_simonev
       - TOPIC=simak2.unpak_simak.m_fakultas
       - TABLE=m_fakultas_simak
+      - REDIS_ADDR=redis:6379     # ✅ host = nama service di docker-compose
+      - REDIS_PASS=               # kalau tanpa password
     depends_on:
       - kafka
+      - redis
     networks:
       - minio-sample
 
@@ -111,7 +125,7 @@ services:
       - minio-sample
 
   simonevconsume_m_program_studi:
-    image: adamilkom00/simonevconsume_m_program_studi:0.0.2
+    image: adamilkom00/simonevconsume_m_program_studi:0.0.3
     container_name: simonevconsume_m_program_studi
     restart: unless-stopped
     environment:
@@ -120,8 +134,11 @@ services:
       - GROUP_ID=m_program_studi_consumeto_simonev
       - TOPIC=simak4.unpak_simak.m_program_studi
       - TABLE=m_program_studi_simak
+      - REDIS_ADDR=redis:6379     # ✅ host = nama service di docker-compose
+      - REDIS_PASS=               # kalau tanpa password
     depends_on:
       - kafka
+      - redis
     networks:
       - minio-sample
 
