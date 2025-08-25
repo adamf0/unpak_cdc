@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/IBM/sarama"
-	"github.com/tecbot/gorocksdb"
+	"github.com/linxGnu/grocksdb"
 	"github.com/tidwall/gjson"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	db    *gorocksdb.DB
+	db    *grocksdb.DB
 	dbSQL *sql.DB
 )
 
@@ -78,12 +78,12 @@ func main() {
 	log.Printf("    rocksdb path : %s", rocksPath)
 
 	// ---- Init RocksDB
-	opts := gorocksdb.NewDefaultOptions()
+	opts := grocksdb.NewDefaultOptions()
 	opts.SetCreateIfMissing(true)
 	opts.SetIncreaseParallelism(2)
 	opts.SetMaxBackgroundCompactions(2)
 	var err error
-	db, err = gorocksdb.OpenDb(opts, rocksPath)
+	db, err = grocksdb.OpenDb(opts, rocksPath)
 	if err != nil {
 		log.Fatalf("❌ failed to open rocksdb: %v", err)
 	}
@@ -93,7 +93,7 @@ func main() {
 	initMariaDB()
 	defer dbSQL.Close()
 
-	// ---- Kafka configs for consuming only
+	// ---- Kafka configs
 	cfg := sarama.NewConfig()
 	cfg.Version = sarama.V2_8_0_0
 	cfg.Consumer.Return.Errors = true
@@ -235,23 +235,18 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 		if output, err := json.MarshalIndent(d, "", "  "); err == nil {
 			fmt.Println("Upsert: ")
 			fmt.Println(string(output))
-		} else {
-			fmt.Println("Error upsert:", err)
 		}
-		// upsertDosenDB(d)
 	} else if before.Exists() {
 		*op = "DOSEN_DELETE"
 		nidn := before.Get("NIDN").String()
 		deleteStateDosen(nidn)
-
 		fmt.Println("Delete: ", nidn)
-		// deleteDosenDB(nidn)
 	}
 }
 
 // ---------------- RocksDB ----------------
 func putStateFakultas(f Fakultas) error {
-	wo := gorocksdb.NewDefaultWriteOptions()
+	wo := grocksdb.NewDefaultWriteOptions()
 	defer wo.Destroy()
 	key := []byte("fakultas:" + f.KodeFakultas)
 	b, _ := json.Marshal(f)
@@ -259,14 +254,14 @@ func putStateFakultas(f Fakultas) error {
 }
 
 func deleteStateFakultas(kode string) error {
-	wo := gorocksdb.NewDefaultWriteOptions()
+	wo := grocksdb.NewDefaultWriteOptions()
 	defer wo.Destroy()
 	key := []byte("fakultas:" + kode)
 	return db.Delete(wo, key)
 }
 
 func readStateFakultas(kode string) (*Fakultas, error) {
-	ro := gorocksdb.NewDefaultReadOptions()
+	ro := grocksdb.NewDefaultReadOptions()
 	defer ro.Destroy()
 	key := []byte("fakultas:" + kode)
 	v, err := db.Get(ro, key)
@@ -283,7 +278,7 @@ func readStateFakultas(kode string) (*Fakultas, error) {
 }
 
 func putStateProdi(p Prodi) error {
-	wo := gorocksdb.NewDefaultWriteOptions()
+	wo := grocksdb.NewDefaultWriteOptions()
 	defer wo.Destroy()
 	key := []byte("prodi:" + p.KodeProdi)
 	b, _ := json.Marshal(p)
@@ -291,14 +286,14 @@ func putStateProdi(p Prodi) error {
 }
 
 func deleteStateProdi(kode string) error {
-	wo := gorocksdb.NewDefaultWriteOptions()
+	wo := grocksdb.NewDefaultWriteOptions()
 	defer wo.Destroy()
 	key := []byte("prodi:" + kode)
 	return db.Delete(wo, key)
 }
 
 func readStateProdi(kode string) (*Prodi, error) {
-	ro := gorocksdb.NewDefaultReadOptions()
+	ro := grocksdb.NewDefaultReadOptions()
 	defer ro.Destroy()
 	key := []byte("prodi:" + kode)
 	v, err := db.Get(ro, key)
@@ -315,7 +310,7 @@ func readStateProdi(kode string) (*Prodi, error) {
 }
 
 func putStateDosen(d Dosen) error {
-	wo := gorocksdb.NewDefaultWriteOptions()
+	wo := grocksdb.NewDefaultWriteOptions()
 	defer wo.Destroy()
 	key := []byte("dosen:" + d.NIDN)
 	b, _ := json.Marshal(d)
@@ -323,7 +318,7 @@ func putStateDosen(d Dosen) error {
 }
 
 func deleteStateDosen(nidn string) error {
-	wo := gorocksdb.NewDefaultWriteOptions()
+	wo := grocksdb.NewDefaultWriteOptions()
 	defer wo.Destroy()
 	key := []byte("dosen:" + nidn)
 	return db.Delete(wo, key)
@@ -331,7 +326,7 @@ func deleteStateDosen(nidn string) error {
 
 // ---------------- MariaDB CRUD ----------------
 func initMariaDB() {
-	dsn := mustEnv("MYSQL_DSN", "root:password@tcp(localhost:3306)/testdb")
+	dsn := mustEnv("MYSQL_DSN", "root:password@tcp(mariadb:3306)/testdb")
 	var err error
 	dbSQL, err = sql.Open("mysql", dsn)
 	if err != nil {
