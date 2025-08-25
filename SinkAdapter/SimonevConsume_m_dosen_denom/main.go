@@ -9,28 +9,23 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
 	"github.com/IBM/sarama"
+	"github.com/redis/go-redis/v9"
 	"github.com/tidwall/gjson"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
-	dbSQL *sql.DB
-
-	// cache fakultas & prodi
-	fakultasCache = make(map[string]string)
-	prodiCache    = make(map[string]string)
-	cacheMu       sync.RWMutex
+	dbSQL  *sql.DB
+	rdb    *redis.Client
+	ctxBg  = context.Background()
 )
 
 const (
 	defaultBrokers    = "localhost:9092"
-	defaultTopicFak   = "simak2.unpak_simak.m_fakultas"
-	defaultTopicProdi = "simak4.unpak_simak.m_program_studi"
 	defaultTopicDosen = "simak5.unpak_simak.m_dosen"
 )
 
@@ -56,18 +51,17 @@ func mustEnv(key, def string) string {
 
 func main() {
 	brokers := mustEnv("KAFKA_BROKERS", defaultBrokers)
-	topicFak := mustEnv("TOPIC_FAKULTAS", defaultTopicFak)
-	topicProdi := mustEnv("TOPIC_PRODI", defaultTopicProdi)
 	topicDosen := mustEnv("TOPIC_DOSEN", defaultTopicDosen)
 
 	log.Printf("▶️  starting joiner-service")
 	log.Printf("    brokers    : %s", brokers)
-	log.Printf("    topicFak   : %s", topicFak)
-	log.Printf("    topicProdi : %s", topicProdi)
 	log.Printf("    topicDosen : %s", topicDosen)
 
 	initMariaDB()
 	defer dbSQL.Close()
+
+	initRedis()
+	defer rdb.Close()
 
 	cfg := sarama.NewConfig()
 	cfg.Version = sarama.V2_8_0_0
@@ -85,8 +79,6 @@ func main() {
 	defer cancel()
 
 	handler := &consumerHandler{
-		topicFak:   topicFak,
-		topicProdi: topicProdi,
 		topicDosen: topicDosen,
 	}
 
@@ -100,7 +92,7 @@ func main() {
 	// consuming loop
 	go func() {
 		for {
-			if err := consumer.Consume(ctx, []string{topicFak, topicProdi, topicDosen}, handler); err != nil {
+			if err := consumer.Consume(ctx, []string{topicDosen}, handler); err != nil {
 				log.Printf("⚠️  consume error: %v", err)
 				time.Sleep(time.Second)
 			}
@@ -117,8 +109,6 @@ func main() {
 
 // ---------------- Consumer ----------------
 type consumerHandler struct {
-	topicFak   string
-	topicProdi string
 	topicDosen string
 }
 
@@ -153,58 +143,22 @@ func (h *consumerHandler) process(topic string, value []byte, op *string) {
 	}
 
 	switch topic {
-	case h.topicFak:
-		h.handleFakultas(before, after, op)
-	case h.topicProdi:
-		h.handleProdi(before, after, op)
 	case h.topicDosen:
 		h.handleDosen(before, after, op)
 	}
 }
 
 // ---------------- Handlers ----------------
-func (h *consumerHandler) handleFakultas(before, after gjson.Result, op *string) {
-	if after.Exists() {
-		kode := after.Get("kode_fakultas").String()
-		nama := after.Get("nama_fakultas").String()
-		cacheMu.Lock()
-		fakultasCache[kode] = nama
-		cacheMu.Unlock()
-		*op = "FAKULTAS_UPSERT"
-	} else if before.Exists() {
-		kode := before.Get("kode_fakultas").String()
-		cacheMu.Lock()
-		delete(fakultasCache, kode)
-		cacheMu.Unlock()
-		*op = "FAKULTAS_DELETE"
-	}
-}
-
-func (h *consumerHandler) handleProdi(before, after gjson.Result, op *string) {
-	if after.Exists() {
-		kode := after.Get("kode_prodi").String()
-		nama := after.Get("nama_prodi").String()
-		cacheMu.Lock()
-		prodiCache[kode] = nama
-		cacheMu.Unlock()
-		*op = "PRODI_UPSERT"
-	} else if before.Exists() {
-		kode := before.Get("kode_prodi").String()
-		cacheMu.Lock()
-		delete(prodiCache, kode)
-		cacheMu.Unlock()
-		*op = "PRODI_DELETE"
-	}
-}
-
 func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 	if after.Exists() {
 		*op = "DOSEN_UPSERT"
 
-		cacheMu.RLock()
-		namaFak := fakultasCache[after.Get("kode_fak").String()]
-		namaProdi := prodiCache[after.Get("kode_prodi").String()]
-		cacheMu.RUnlock()
+		kodeFak := after.Get("kode_fak").String()
+		kodeProdi := after.Get("kode_prodi").String()
+
+		// ambil nama fakultas & prodi dari redis
+		namaFak, _ := rdb.Get(ctxBg, "fakultas#"+kodeFak).Result()
+		namaProdi, _ := rdb.Get(ctxBg, "prodi#"+kodeProdi).Result()
 
 		d := DosenJoined{
 			NIDN:         after.Get("NIDN").String(),
@@ -213,12 +167,19 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 			KodeJurusan:  after.Get("kode_jurusan").String(),
 			KodeJenjang:  after.Get("kode_jenjang").String(),
 			NamaDosen:    after.Get("nama_dosen").String(),
-			KodeFak:      after.Get("kode_fak").String(),
+			KodeFak:      kodeFak,
 			NamaFakultas: namaFak,
-			KodeProdi:    after.Get("kode_prodi").String(),
+			KodeProdi:    kodeProdi,
 			NamaProdi:    namaProdi,
 		}
 
+		if b, err := json.MarshalIndent(d, "", "  "); err == nil {
+			fmt.Println("Upsert:\n" + string(b))
+		} else {
+			log.Printf("❌ Upsert: %v", err)
+		}
+
+		// contoh jika mau insert ke MariaDB
 		// q := `INSERT INTO dosen_joined 
 		//       (nidn, nip_lama, nip_baru, kode_jurusan, kode_jenjang, nama_dosen, kode_fak, nama_fakultas, kode_prodi, nama_prodi)
 		//       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -232,30 +193,20 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 		//         nama_fakultas=VALUES(nama_fakultas),
 		//         kode_prodi=VALUES(kode_prodi),
 		//         nama_prodi=VALUES(nama_prodi)`
-
-		if b, err := json.MarshalIndent(d, "", "  "); err == nil {
-			fmt.Println("Upsert:\n" + string(b))
-		} else{
-			log.Printf("❌ Upsert: %v", err)
-		}
 		// if _, err := dbSQL.Exec(q,
 		// 	d.NIDN, d.NIPLama, d.NIPBaru, d.KodeJurusan, d.KodeJenjang, d.NamaDosen,
 		// 	d.KodeFak, d.NamaFakultas, d.KodeProdi, d.NamaProdi,
 		// ); err != nil {
 		// 	log.Printf("❌ upsert dosen: %v", err)
-		// } else if b, err := json.MarshalIndent(d, "", "  "); err == nil {
-		// 	fmt.Println("Upsert:\n" + string(b))
 		// }
 	} else if before.Exists() {
 		*op = "DOSEN_DELETE"
 		nidn := before.Get("NIDN").String()
-		// q := `DELETE FROM dosen_joined WHERE nidn=?`
-
 		fmt.Println("Delete:\n" + nidn)
+
+		// q := `DELETE FROM dosen_joined WHERE nidn=?`
 		// if _, err := dbSQL.Exec(q, nidn); err != nil {
 		// 	log.Printf("❌ delete dosen: %v", err)
-		// } else {
-		// 	fmt.Println("Delete:", nidn)
 		// }
 	}
 }
@@ -272,4 +223,21 @@ func initMariaDB() {
 		log.Fatalf("❌ mysql ping: %v", err)
 	}
 	log.Println("✅ connected to MariaDB")
+}
+
+// ---------------- Redis ----------------
+func initRedis() {
+	addr := mustEnv("REDIS_ADDR", "localhost:6379")
+	pass := mustEnv("REDIS_PASS", "")
+
+	rdb = redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: pass,
+		DB:       0,
+	})
+
+	if err := rdb.Ping(ctxBg).Err(); err != nil {
+		log.Fatalf("❌ redis connect: %v", err)
+	}
+	log.Println("✅ connected to Redis")
 }
