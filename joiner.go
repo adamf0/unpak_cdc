@@ -20,9 +20,9 @@ import (
 
 const (
 	defaultBrokers       = "kafka:9092"
-	defaultTopicFakultas = "mariadb_server.testdb.fakultas"
-	defaultTopicProdi    = "mariadb_server.testdb.prodi"
-	defaultTopicDosen    = "mariadb_server.testdb.dosen"
+	defaultTopicFakultas = "simak2.unpak_simak.m_fakultas"
+	defaultTopicProdi    = "simak4.unpak_simak.m_program_studi"
+	defaultTopicDosen    = "simak5.unpak_simak.m_dosen"
 )
 
 var (
@@ -232,12 +232,20 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 			d.KodeProdi = &p.KodeProdi
 		}
 		putStateDosen(d)
-		upsertDosenDB(d)
+		if output, err := json.MarshalIndent(d, "", "  "); err == nil {
+			fmt.Println("Upsert: ")
+			fmt.Println(string(output))
+		} else {
+			fmt.Println("Error upsert:", err)
+		}
+		// upsertDosenDB(d)
 	} else if before.Exists() {
 		*op = "DOSEN_DELETE"
 		nidn := before.Get("NIDN").String()
 		deleteStateDosen(nidn)
-		deleteDosenDB(nidn)
+
+		fmt.Println("Delete: ", nidn)
+		// deleteDosenDB(nidn)
 	}
 }
 
