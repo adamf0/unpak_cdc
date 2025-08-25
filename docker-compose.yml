@@ -158,7 +158,7 @@ services:
       - minio-sample
 
   simonevconsume_m_dosen_denom:
-    image: adamilkom00/simonevconsume_m_dosen_denom:0.0.1
+    image: adamilkom00/simonevconsume_m_dosen_denom:0.0.2
     container_name: simonevconsume_m_dosen_denom
     restart: unless-stopped
     environment:

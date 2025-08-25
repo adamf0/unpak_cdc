@@ -37,6 +37,12 @@ type DosenJoined struct {
 	JenjangMap1      string `json:"jenjang_map1"`
 	JenjangMap2      string `json:"jenjang_map2"`
 	NamaDosen        string `json:"nama_dosen"`
+	StatusAktif       string `json:"status_aktif"`
+	PangkatGolongan   string `json:"pangkat_golongan"`
+	JabatanAkademik   string `json:"jabatan_akademik"`
+	JabatanFungsional string `json:"jabatan_fungsional"`
+	JabatanStruktural string `json:"jabatan_struktural"`
+	StatusPegawai     string `json:"status_pegawai"`
 	KodeFak          string `json:"kode_fak"`
 	NamaFakultas     string `json:"nama_fakultas"`
 	NamaFakultasMap1 string `json:"nama_fakultas_map1"`
@@ -213,15 +219,11 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 		namaFak := ""
 		if val, err := rdb.Get(ctxBg, "fakultas#"+kodeFak).Result(); err == nil {
 			namaFak = gjson.Get(val, "nama_fakultas").String()
-		} else if err != redis.Nil {
-			log.Printf("⚠️ redis error fakultas %s: %v", kodeFak, err)
 		}
 
 		namaProdi := ""
 		if val, err := rdb.Get(ctxBg, "prodi#"+kodeProdi).Result(); err == nil {
 			namaProdi = gjson.Get(val, "nama_prodi").String()
-		} else if err != redis.Nil {
-			log.Printf("⚠️ redis error prodi %s: %v", kodeProdi, err)
 		}
 
 		d := DosenJoined{
@@ -233,6 +235,12 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 			JenjangMap1:      mapJenjangV1(after.Get("kode_jenjang").String()),
 			JenjangMap2:      mapJenjangV2(after.Get("kode_jenjang").String()),
 			NamaDosen:        after.Get("nama_dosen").String(),
+			StatusAktif:      after.Get("status_aktif").String(),
+			PangkatGolongan:  after.Get("pangkat_golongan").String(),
+			JabatanAkademik:  after.Get("jabatan_akademik").String(),
+			JabatanFungsional: after.Get("jabatan_fungsional").String(),
+			JabatanStruktural: after.Get("jabatan_struktural").String(),
+			StatusPegawai:    after.Get("status_pegawai").String(),
 			KodeFak:          kodeFak,
 			NamaFakultas:     namaFak,
 			NamaFakultasMap1: namaFak + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
@@ -247,31 +255,53 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 			Pattern2:         kodeFak + "#" + after.Get("kode_jenjang").String() + "#" + kodeProdi,
 		}
 
-		// contoh jika mau insert ke MariaDB
+		// 🔥 CRUD lengkap
 		q := fmt.Sprintf(`INSERT INTO %s 
-		      (nidn, nip_lama, nip_baru, kode_jurusan, kode_jenjang, nama_dosen, kode_fak, nama_fakultas, kode_prodi, nama_prodi)
-		      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		      ON DUPLICATE KEY UPDATE
-		        nip_lama=VALUES(nip_lama),
-		        nip_baru=VALUES(nip_baru),
-		        kode_jurusan=VALUES(kode_jurusan),
-		        kode_jenjang=VALUES(kode_jenjang),
-		        nama_dosen=VALUES(nama_dosen),
-		        kode_fak=VALUES(kode_fak),
-		        nama_fakultas=VALUES(nama_fakultas),
-		        kode_prodi=VALUES(kode_prodi),
-		        nama_prodi=VALUES(nama_prodi)`, h.tbl)
+		(nidn, nip_lama, nip_baru, kode_jurusan, kode_jenjang, jenjang_map1, jenjang_map2,
+		 nama_dosen, status_aktif, pangkat_golongan, jabatan_akademik, jabatan_fungsional, jabatan_struktural, status_pegawai,
+		 kode_fak, nama_fakultas, nama_fakultas_map1, nama_fakultas_map2,
+		 kode_prodi, nama_prodi, nama_prodi_map1, nama_prodi_map2,
+		 prodi_fakultas1, prodi_fakultas2, pattern1, pattern2)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+			nip_lama=VALUES(nip_lama),
+			nip_baru=VALUES(nip_baru),
+			kode_jurusan=VALUES(kode_jurusan),
+			kode_jenjang=VALUES(kode_jenjang),
+			jenjang_map1=VALUES(jenjang_map1),
+			jenjang_map2=VALUES(jenjang_map2),
+			nama_dosen=VALUES(nama_dosen),
+			status_aktif=VALUES(status_aktif),
+			pangkat_golongan=VALUES(pangkat_golongan),
+			jabatan_akademik=VALUES(jabatan_akademik),
+			jabatan_fungsional=VALUES(jabatan_fungsional),
+			jabatan_struktural=VALUES(jabatan_struktural),
+			status_pegawai=VALUES(status_pegawai),
+			kode_fak=VALUES(kode_fak),
+			nama_fakultas=VALUES(nama_fakultas),
+			nama_fakultas_map1=VALUES(nama_fakultas_map1),
+			nama_fakultas_map2=VALUES(nama_fakultas_map2),
+			kode_prodi=VALUES(kode_prodi),
+			nama_prodi=VALUES(nama_prodi),
+			nama_prodi_map1=VALUES(nama_prodi_map1),
+			nama_prodi_map2=VALUES(nama_prodi_map2),
+			prodi_fakultas1=VALUES(prodi_fakultas1),
+			prodi_fakultas2=VALUES(prodi_fakultas2),
+			pattern1=VALUES(pattern1),
+			pattern2=VALUES(pattern2)`, h.tbl)
+
 		if _, err := dbSQL.Exec(q,
-			d.NIDN, d.NIPLama, d.NIPBaru, d.KodeJurusan, d.KodeJenjang, d.NamaDosen,
-			d.KodeFak, d.NamaFakultas, d.KodeProdi, d.NamaProdi,
+			d.NIDN, d.NIPLama, d.NIPBaru, d.KodeJurusan, d.KodeJenjang, d.JenjangMap1, d.JenjangMap2,
+			d.NamaDosen, d.StatusAktif, d.PangkatGolongan, d.JabatanAkademik, d.JabatanFungsional, d.JabatanStruktural, d.StatusPegawai,
+			d.KodeFak, d.NamaFakultas, d.NamaFakultasMap1, d.NamaFakultasMap2,
+			d.KodeProdi, d.NamaProdi, d.NamaProdiMap1, d.NamaProdiMap2,
+			d.ProdiFakultas1, d.ProdiFakultas2, d.Pattern1, d.Pattern2,
 		); err != nil {
 			log.Printf("❌ upsert dosen (denom): %v", err)
 		}
 	} else if before.Exists() {
 		*op = "DOSEN_DELETE"
 		nidn := before.Get("NIDN").String()
-		fmt.Println("Delete (denom):\n" + nidn)
-
 		q := fmt.Sprintf(`DELETE FROM %s WHERE nidn=?`, h.tbl)
 		if _, err := dbSQL.Exec(q, nidn); err != nil {
 			log.Printf("❌ delete dosen: %v", err)
