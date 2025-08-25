@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -19,9 +18,9 @@ import (
 )
 
 var (
-	dbSQL  *sql.DB
-	rdb    *redis.Client
-	ctxBg  = context.Background()
+	dbSQL *sql.DB
+	rdb   *redis.Client
+	ctxBg = context.Background()
 )
 
 const (
@@ -30,26 +29,26 @@ const (
 )
 
 type DosenJoined struct {
-	NIDN         string `json:"nidn"`
-	NIPLama      string `json:"nip_lama"`
-	NIPBaru      string `json:"nip_baru"`
-	KodeJurusan  string `json:"kode_jurusan"`
-	KodeJenjang  string `json:"kode_jenjang"`
-	JenjangMap1  string `json:"jenjang_map1"`
-	JenjangMap2  string `json:"jenjang_map2"`
-	NamaDosen    string `json:"nama_dosen"`
-	KodeFak      string `json:"kode_fak"`
-	NamaFakultas string `json:"nama_fakultas"`
+	NIDN             string `json:"nidn"`
+	NIPLama          string `json:"nip_lama"`
+	NIPBaru          string `json:"nip_baru"`
+	KodeJurusan      string `json:"kode_jurusan"`
+	KodeJenjang      string `json:"kode_jenjang"`
+	JenjangMap1      string `json:"jenjang_map1"`
+	JenjangMap2      string `json:"jenjang_map2"`
+	NamaDosen        string `json:"nama_dosen"`
+	KodeFak          string `json:"kode_fak"`
+	NamaFakultas     string `json:"nama_fakultas"`
 	NamaFakultasMap1 string `json:"nama_fakultas_map1"`
 	NamaFakultasMap2 string `json:"nama_fakultas_map2"`
-	KodeProdi    string `json:"kode_prodi"`
-	NamaProdi    string `json:"nama_prodi"`
+	KodeProdi        string `json:"kode_prodi"`
+	NamaProdi        string `json:"nama_prodi"`
 	NamaProdiMap1    string `json:"nama_prodi_map1"`
 	NamaProdiMap2    string `json:"nama_prodi_map2"`
-	ProdiFakultas1    string `json:"prodi_fakultas1"`
-	ProdiFakultas2    string `json:"prodi_fakultas2"`
-	Pattern1    string `json:"pattern1"`
-	Pattern2    string `json:"pattern2"`
+	ProdiFakultas1   string `json:"prodi_fakultas1"`
+	ProdiFakultas2   string `json:"prodi_fakultas2"`
+	Pattern1         string `json:"pattern1"`
+	Pattern2         string `json:"pattern2"`
 }
 
 func mustEnv(key, def string) string {
@@ -95,7 +94,7 @@ func main() {
 
 	handler := &consumerHandler{
 		topicDosen: topicDosen,
-		tbl: tbl
+		tbl:        tbl,
 	}
 
 	// error listener
@@ -126,7 +125,7 @@ func main() {
 // ---------------- Consumer ----------------
 type consumerHandler struct {
 	topicDosen string
-	tbl: string
+	tbl        string
 }
 
 func (h *consumerHandler) Setup(sarama.ConsumerGroupSession) error   { return nil }
@@ -226,33 +225,27 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 		}
 
 		d := DosenJoined{
-			NIDN:         		after.Get("NIDN").String(),
-			NIPLama:      		after.Get("nip_lama").String(),
-			NIPBaru:      		after.Get("nip_baru").String(),
-			KodeJurusan:  		after.Get("kode_jurusan").String(),
-			KodeJenjang:  		after.Get("kode_jenjang").String(),
-			JenjangMap1:  		mapJenjangV1(after.Get("kode_jenjang").String()),
-			JenjangMap2:  		mapJenjangV2(after.Get("kode_jenjang").String()),
-			NamaDosen:    		after.Get("nama_dosen").String(),
-			KodeFak:      		kodeFak,
-			NamaFakultas: 		namaFak,
-			NamaFakultasMap1: 	namaFak + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
-			NamaFakultasMap2: 	namaFak + " " + mapJenjangV2(after.Get("kode_jenjang").String()),
-			KodeProdi:    		kodeProdi,
-			NamaProdi:    		namaProdi,
-			NamaProdiMap1:    	namaProdi + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
-			NamaProdiMap2:    	namaProdi + " " + mapJenjangV2(after.Get("kode_jenjang").String()),
-			ProdiFakultas1:    	namaProdi + " [" + namaFak + "]",
-			ProdiFakultas2:    	namaProdi + " [" + namaFak + "] " + mapJenjangV2(after.Get("kode_jenjang").String()),
-			Pattern1:    		kodeFak + "#" + after.Get("kode_jenjang").String(),
-			Pattern2:    		kodeFak + "#" + after.Get("kode_jenjang").String() + "#" + kodeProdi,
+			NIDN:             after.Get("NIDN").String(),
+			NIPLama:          after.Get("nip_lama").String(),
+			NIPBaru:          after.Get("nip_baru").String(),
+			KodeJurusan:      after.Get("kode_jurusan").String(),
+			KodeJenjang:      after.Get("kode_jenjang").String(),
+			JenjangMap1:      mapJenjangV1(after.Get("kode_jenjang").String()),
+			JenjangMap2:      mapJenjangV2(after.Get("kode_jenjang").String()),
+			NamaDosen:        after.Get("nama_dosen").String(),
+			KodeFak:          kodeFak,
+			NamaFakultas:     namaFak,
+			NamaFakultasMap1: namaFak + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
+			NamaFakultasMap2: namaFak + " " + mapJenjangV2(after.Get("kode_jenjang").String()),
+			KodeProdi:        kodeProdi,
+			NamaProdi:        namaProdi,
+			NamaProdiMap1:    namaProdi + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
+			NamaProdiMap2:    namaProdi + " " + mapJenjangV2(after.Get("kode_jenjang").String()),
+			ProdiFakultas1:   namaProdi + " [" + namaFak + "]",
+			ProdiFakultas2:   namaProdi + " [" + namaFak + "] " + mapJenjangV2(after.Get("kode_jenjang").String()),
+			Pattern1:         kodeFak + "#" + after.Get("kode_jenjang").String(),
+			Pattern2:         kodeFak + "#" + after.Get("kode_jenjang").String() + "#" + kodeProdi,
 		}
-
-		// if b, err := json.MarshalIndent(d, "", "  "); err == nil {
-		// 	fmt.Println("Upsert:\n" + string(b))
-		// } else {
-		// 	log.Printf("❌ Upsert: %v", err)
-		// }
 
 		// contoh jika mau insert ke MariaDB
 		q := fmt.Sprintf(`INSERT INTO %s 
@@ -288,7 +281,7 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 
 // ---------------- MariaDB ----------------
 func initMariaDB() {
-	dsn := mustEnv("DSN")
+	dsn := mustEnv("DSN", "")
 	var err error
 	dbSQL, err = sql.Open("mysql", dsn)
 	if err != nil {

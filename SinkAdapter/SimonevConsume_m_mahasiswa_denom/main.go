@@ -91,7 +91,7 @@ func main() {
 
 	handler := &consumerHandler{
 		topicMahasiswa: topicMahasiswa,
-		tbl: tbl
+		tbl: tbl,
 	}
 
 	// error listener
