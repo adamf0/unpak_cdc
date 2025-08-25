@@ -26,30 +26,26 @@ var (
 
 const (
 	defaultBrokers    = "localhost:9092"
-	defaultTopicDosen = "simak5.unpak_simak.m_dosen"
+	defaultTopicMahasiswa = "simak6.unpak_simak.m_mahasiswa"
 )
 
-type DosenJoined struct {
-	NIDN         string `json:"nidn"`
-	NIPLama      string `json:"nip_lama"`
-	NIPBaru      string `json:"nip_baru"`
-	KodeJurusan  string `json:"kode_jurusan"`
-	KodeJenjang  string `json:"kode_jenjang"`
-	JenjangMap1  string `json:"jenjang_map1"`
-	JenjangMap2  string `json:"jenjang_map2"`
-	NamaDosen    string `json:"nama_dosen"`
+type MahasiswaJoined struct {
+	NIM           string `json:"NIM"`
 	KodeFak      string `json:"kode_fak"`
 	NamaFakultas string `json:"nama_fakultas"`
 	NamaFakultasMap1 string `json:"nama_fakultas_map1"`
 	NamaFakultasMap2 string `json:"nama_fakultas_map2"`
+	KodeJurusan   string `json:"kode_jurusan"`
+	KodeJenjang   string `json:"kode_jenjang"`
+	JenjangMap1  string `json:"jenjang_map1"`
+	JenjangMap2  string `json:"jenjang_map2"`
 	KodeProdi    string `json:"kode_prodi"`
 	NamaProdi    string `json:"nama_prodi"`
 	NamaProdiMap1    string `json:"nama_prodi_map1"`
 	NamaProdiMap2    string `json:"nama_prodi_map2"`
-	ProdiFakultas1    string `json:"prodi_fakultas1"`
-	ProdiFakultas2    string `json:"prodi_fakultas2"`
-	Pattern1    string `json:"pattern1"`
-	Pattern2    string `json:"pattern2"`
+	NamaMahasiswa string `json:"nama_mahasiswa"`
+	StatusAktif   string `json:"status_aktif"`
+	TahunMasuk    string `json:"tahun_masuk"`
 }
 
 func mustEnv(key, def string) string {
@@ -61,11 +57,11 @@ func mustEnv(key, def string) string {
 
 func main() {
 	brokers := mustEnv("KAFKA_BROKERS", defaultBrokers)
-	topicDosen := mustEnv("TOPIC_DOSEN", defaultTopicDosen)
+	topicMahasiswa := mustEnv("TOPIC_MAHASISWA", defaultTopicMahasiswa)
 
 	log.Printf("▶️  starting joiner-service")
 	log.Printf("    brokers    : %s", brokers)
-	log.Printf("    topicDosen : %s", topicDosen)
+	log.Printf("    topicMahasiswa : %s", topicMahasiswa)
 
 	initMariaDB()
 	defer dbSQL.Close()
@@ -78,7 +74,7 @@ func main() {
 	cfg.Consumer.Return.Errors = true
 	cfg.Consumer.Offsets.Initial = sarama.OffsetOldest
 
-	groupID := mustEnv("CONSUMER_GROUP", "dosen-denom")
+	groupID := mustEnv("CONSUMER_GROUP", "mahasiswa-denom")
 	consumer, err := sarama.NewConsumerGroup(strings.Split(brokers, ","), groupID, cfg)
 	if err != nil {
 		log.Fatalf("❌ create consumer group: %v", err)
@@ -89,7 +85,7 @@ func main() {
 	defer cancel()
 
 	handler := &consumerHandler{
-		topicDosen: topicDosen,
+		topicMahasiswa: topicMahasiswa,
 	}
 
 	// error listener
@@ -102,7 +98,7 @@ func main() {
 	// consuming loop
 	go func() {
 		for {
-			if err := consumer.Consume(ctx, []string{topicDosen}, handler); err != nil {
+			if err := consumer.Consume(ctx, []string{topicMahasiswa}, handler); err != nil {
 				log.Printf("⚠️  consume error: %v", err)
 				time.Sleep(time.Second)
 			}
@@ -119,7 +115,7 @@ func main() {
 
 // ---------------- Consumer ----------------
 type consumerHandler struct {
-	topicDosen string
+	topicMahasiswa string
 }
 
 func (h *consumerHandler) Setup(sarama.ConsumerGroupSession) error   { return nil }
@@ -153,8 +149,8 @@ func (h *consumerHandler) process(topic string, value []byte, op *string) {
 	}
 
 	switch topic {
-	case h.topicDosen:
-		h.handleDosen(before, after, op)
+	case h.topicMahasiswa:
+		h.handleMahasiswa(before, after, op)
 	}
 }
 
@@ -196,9 +192,9 @@ func mapJenjangV2(kode string) string {
 }
 
 // ---------------- Handlers ----------------
-func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
+func (h *consumerHandler) handleMahasiswa(before, after gjson.Result, op *string) {
 	if after.Exists() {
-		*op = "DOSEN_UPSERT"
+		*op = "MAHASISWA_UPSERT"
 
 		kodeFak := after.Get("kode_fak").String()
 		kodeProdi := after.Get("kode_prodi").String()
@@ -218,63 +214,76 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 			log.Printf("⚠️ redis error prodi %s: %v", kodeProdi, err)
 		}
 
-		d := DosenJoined{
-			NIDN:         		after.Get("NIDN").String(),
-			NIPLama:      		after.Get("nip_lama").String(),
-			NIPBaru:      		after.Get("nip_baru").String(),
-			KodeJurusan:  		after.Get("kode_jurusan").String(),
-			KodeJenjang:  		after.Get("kode_jenjang").String(),
-			JenjangMap1:  		mapJenjangV1(after.Get("kode_jenjang").String()),
-			JenjangMap2:  		mapJenjangV2(after.Get("kode_jenjang").String()),
-			NamaDosen:    		after.Get("nama_dosen").String(),
+		d := MahasiswaJoined{
+			NIM:         		after.Get("NIM").String(),
 			KodeFak:      		kodeFak,
 			NamaFakultas: 		namaFak,
 			NamaFakultasMap1: 	namaFak + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
 			NamaFakultasMap2: 	namaFak + " " + mapJenjangV2(after.Get("kode_jenjang").String()),
+			
+			KodeJurusan:  		after.Get("kode_jurusan").String(),
+			
+			KodeJenjang:  		after.Get("kode_jenjang").String(),
+			JenjangMap1:  		mapJenjangV1(after.Get("kode_jenjang").String()),
+			JenjangMap2:  		mapJenjangV2(after.Get("kode_jenjang").String()),
+			
 			KodeProdi:    		kodeProdi,
 			NamaProdi:    		namaProdi,
 			NamaProdiMap1:    	namaProdi + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
 			NamaProdiMap2:    	namaProdi + " " + mapJenjangV2(after.Get("kode_jenjang").String()),
-			ProdiFakultas1:    	namaProdi + " [" + namaFak + "]",
-			ProdiFakultas2:    	namaProdi + " [" + namaFak + "] " + mapJenjangV2(after.Get("kode_jenjang").String()),
-			Pattern1:    		kodeFak + "#" + after.Get("kode_jenjang").String(),
-			Pattern2:    		kodeFak + "#" + after.Get("kode_jenjang").String() + "#" + kodeProdi,
+
+			NamaMahasiswa:    	after.Get("nama_mahasiswa").String(),
+			StatusAktif:    	after.Get("status_aktif").String(),
+			TahunMasuk:    		after.Get("tahun_masuk").String(),			
 		}
 
-		// if b, err := json.MarshalIndent(d, "", "  "); err == nil {
-		// 	fmt.Println("Upsert:\n" + string(b))
-		// } else {
-		// 	log.Printf("❌ Upsert: %v", err)
-		// }
+		if b, err := json.MarshalIndent(d, "", "  "); err == nil {
+			fmt.Println("Upsert:\n" + string(b))
+		} else {
+			log.Printf("❌ Upsert: %v", err)
+		}
 
 		// contoh jika mau insert ke MariaDB
-		q := `INSERT INTO m_dosen_simak_denom 
-		      (nidn, nip_lama, nip_baru, kode_jurusan, kode_jenjang, nama_dosen, kode_fak, nama_fakultas, kode_prodi, nama_prodi)
-		      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		      ON DUPLICATE KEY UPDATE
-		        nip_lama=VALUES(nip_lama),
-		        nip_baru=VALUES(nip_baru),
-		        kode_jurusan=VALUES(kode_jurusan),
-		        kode_jenjang=VALUES(kode_jenjang),
-		        nama_dosen=VALUES(nama_dosen),
-		        kode_fak=VALUES(kode_fak),
-		        nama_fakultas=VALUES(nama_fakultas),
-		        kode_prodi=VALUES(kode_prodi),
-		        nama_prodi=VALUES(nama_prodi)`
+		q := `INSERT INTO m_mahasiswa_simak_denom 
+				(nim, kode_fak, nama_fakultas, nama_fakultas_map1, nama_fakultas_map2,
+				kode_jurusan, kode_jenjang, jenjang_map1, jenjang_map2,
+				kode_prodi, nama_prodi, nama_prodi_map1, nama_prodi_map2,
+				nama_mahasiswa, status_aktif, tahun_masuk)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+				ON DUPLICATE KEY UPDATE
+					kode_fak=VALUES(kode_fak),
+					nama_fakultas=VALUES(nama_fakultas),
+					nama_fakultas_map1=VALUES(nama_fakultas_map1),
+					nama_fakultas_map2=VALUES(nama_fakultas_map2),
+					kode_jurusan=VALUES(kode_jurusan),
+					kode_jenjang=VALUES(kode_jenjang),
+					jenjang_map1=VALUES(jenjang_map1),
+					jenjang_map2=VALUES(jenjang_map2),
+					kode_prodi=VALUES(kode_prodi),
+					nama_prodi=VALUES(nama_prodi),
+					nama_prodi_map1=VALUES(nama_prodi_map1),
+					nama_prodi_map2=VALUES(nama_prodi_map2),
+					nama_mahasiswa=VALUES(nama_mahasiswa),
+					status_aktif=VALUES(status_aktif),
+					tahun_masuk=VALUES(tahun_masuk)`
+
 		if _, err := dbSQL.Exec(q,
-			d.NIDN, d.NIPLama, d.NIPBaru, d.KodeJurusan, d.KodeJenjang, d.NamaDosen,
-			d.KodeFak, d.NamaFakultas, d.KodeProdi, d.NamaProdi,
+			d.NIM,
+			d.KodeFak, d.NamaFakultas, d.NamaFakultasMap1, d.NamaFakultasMap2,
+			d.KodeJurusan, d.KodeJenjang, d.JenjangMap1, d.JenjangMap2,
+			d.KodeProdi, d.NamaProdi, d.NamaProdiMap1, d.NamaProdiMap2,
+			d.NamaMahasiswa, d.StatusAktif, d.TahunMasuk,
 		); err != nil {
-			log.Printf("❌ upsert dosen (denom): %v", err)
+			log.Printf("❌ upsert mahasiswa: %v", err)
 		}
 	} else if before.Exists() {
-		*op = "DOSEN_DELETE"
+		*op = "MAHASISWA_DELETE"
 		nidn := before.Get("NIDN").String()
-		fmt.Println("Delete (denom):\n" + nidn)
+		fmt.Println("Delete:\n" + nidn)
 
-		q := `DELETE FROM m_dosen_simak_denom WHERE nidn=?`
+		q := `DELETE FROM m_mahasiswa_simak_denom WHERE nidn=?`
 		if _, err := dbSQL.Exec(q, nidn); err != nil {
-			log.Printf("❌ delete dosen: %v", err)
+			log.Printf("❌ delete mahasiswa: %v", err)
 		}
 	}
 }
