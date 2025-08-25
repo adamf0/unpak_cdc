@@ -35,11 +35,19 @@ type DosenJoined struct {
 	NIPBaru      string `json:"nip_baru"`
 	KodeJurusan  string `json:"kode_jurusan"`
 	KodeJenjang  string `json:"kode_jenjang"`
+	JenjangMap1  string `json:"jenjang_map1"`
+	JenjangMap2  string `json:"jenjang_map2"`
 	NamaDosen    string `json:"nama_dosen"`
 	KodeFak      string `json:"kode_fak"`
 	NamaFakultas string `json:"nama_fakultas"`
+	NamaFakultasMap1 string `json:"nama_fakultas_map1"`
+	NamaFakultasMap2 string `json:"nama_fakultas_map2"`
 	KodeProdi    string `json:"kode_prodi"`
 	NamaProdi    string `json:"nama_prodi"`
+	NamaProdiMap1    string `json:"nama_prodi_map1"`
+	NamaProdiMap2    string `json:"nama_prodi_map2"`
+	Pattern1    string `json:"pattern1"`
+	Pattern2    string `json:"pattern2"`
 }
 
 func mustEnv(key, def string) string {
@@ -148,6 +156,43 @@ func (h *consumerHandler) process(topic string, value []byte, op *string) {
 	}
 }
 
+func mapJenjangV1(kode string) string {
+	switch kode {
+	case "C":
+		return "S1"
+	case "B":
+		return "S2"
+	case "A":
+		return "S3"
+	case "E":
+		return "D3"
+	case "D":
+		return "D4"
+	case "J":
+		return "Profesi"
+	default:
+		return "?"
+	}
+}
+func mapJenjangV2(kode string) string {
+	switch kode {
+	case "C":
+		return "(S1)"
+	case "B":
+		return "(S2)"
+	case "A":
+		return "(S3)"
+	case "E":
+		return "(D3)"
+	case "D":
+		return "(D4)"
+	case "J":
+		return "(Profesi)"
+	default:
+		return "(?)"
+	}
+}
+
 // ---------------- Handlers ----------------
 func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 	if after.Exists() {
@@ -157,20 +202,39 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 		kodeProdi := after.Get("kode_prodi").String()
 
 		// ambil nama fakultas & prodi dari redis
-		namaFak, _ := rdb.Get(ctxBg, "fakultas#"+kodeFak).Result()
-		namaProdi, _ := rdb.Get(ctxBg, "prodi#"+kodeProdi).Result()
+		namaFak := ""
+		if val, err := rdb.Get(ctxBg, "fakultas#"+kodeFak).Result(); err == nil {
+			namaFak = gjson.Get(val, "nama_fakultas").String()
+		} else if err != redis.Nil {
+			log.Printf("⚠️ redis error fakultas %s: %v", kodeFak, err)
+		}
+
+		namaProdi := ""
+		if val, err := rdb.Get(ctxBg, "prodi#"+kodeProdi).Result(); err == nil {
+			namaProdi = gjson.Get(val, "nama_prodi").String()
+		} else if err != redis.Nil {
+			log.Printf("⚠️ redis error prodi %s: %v", kodeProdi, err)
+		}
 
 		d := DosenJoined{
-			NIDN:         after.Get("NIDN").String(),
-			NIPLama:      after.Get("nip_lama").String(),
-			NIPBaru:      after.Get("nip_baru").String(),
-			KodeJurusan:  after.Get("kode_jurusan").String(),
-			KodeJenjang:  after.Get("kode_jenjang").String(),
-			NamaDosen:    after.Get("nama_dosen").String(),
-			KodeFak:      kodeFak,
-			NamaFakultas: namaFak,
-			KodeProdi:    kodeProdi,
-			NamaProdi:    namaProdi,
+			NIDN:         		after.Get("NIDN").String(),
+			NIPLama:      		after.Get("nip_lama").String(),
+			NIPBaru:      		after.Get("nip_baru").String(),
+			KodeJurusan:  		after.Get("kode_jurusan").String(),
+			KodeJenjang:  		after.Get("kode_jenjang").String(),
+			JenjangMap1:  		mapJenjangV1(after.Get("kode_jenjang").String()),
+			JenjangMap2:  		mapJenjangV2(after.Get("kode_jenjang").String()),
+			NamaDosen:    		after.Get("nama_dosen").String(),
+			KodeFak:      		kodeFak,
+			NamaFakultas: 		namaFak,
+			NamaFakultasMap1: 	namaFak + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
+			NamaFakultasMap2: 	namaFak + " " + mapJenjangV2(after.Get("kode_jenjang").String()),
+			KodeProdi:    		kodeProdi,
+			NamaProdi:    		namaProdi,
+			NamaProdiMap1:    	namaProdi + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
+			NamaProdiMap2:    	namaProdi + " " + mapJenjangV2(after.Get("kode_jenjang").String()),
+			Pattern1:    		kodeFak + "#" + after.Get("kode_jenjang").String(),
+			Pattern2:    		kodeFak + "#" + after.Get("kode_jenjang").String() + "#" + kodeProdi,
 		}
 
 		if b, err := json.MarshalIndent(d, "", "  "); err == nil {
