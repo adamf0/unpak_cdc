@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"encoding/json"
 	"strings"
 	"syscall"
 	"time"
@@ -274,14 +275,21 @@ func (h *consumerHandler) handleMahasiswa(before, after gjson.Result, op *string
 					status_aktif=VALUES(status_aktif),
 					tahun_masuk=VALUES(tahun_masuk)`, h.tbl)
 
-		if _, err := dbSQL.Exec(q,
+		_, err := dbSQL.Exec(q,
 			d.NIM,
 			d.KodeFak, d.NamaFakultas, d.NamaFakultasMap1, d.NamaFakultasMap2,
 			d.KodeJurusan, d.KodeJenjang, d.JenjangMap1, d.JenjangMap2,
 			d.KodeProdi, d.NamaProdi, d.NamaProdiMap1, d.NamaProdiMap2,
 			d.NamaMahasiswa, d.StatusAktif, d.TahunMasuk,
-		); err != nil {
-			log.Printf("❌ upsert mahasiswa: %v", err)
+		)
+		if err != nil {
+			log.Printf("❌ upsert mahasiswa (denom): %v", err)
+			return
+		}
+		if b, err := json.MarshalIndent(d, "", "  "); err == nil {
+			fmt.Println("Upsert:\n" + string(b))
+		} else {
+			log.Printf("❌ marshal mahasiswa: %v", err)
 		}
 	} else if before.Exists() {
 		*op = "MAHASISWA_DELETE"

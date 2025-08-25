@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"encoding/json"
 	"strings"
 	"syscall"
 	"time"
@@ -290,14 +291,21 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 			pattern1=VALUES(pattern1),
 			pattern2=VALUES(pattern2)`, h.tbl)
 
-		if _, err := dbSQL.Exec(q,
+		_, err := dbSQL.Exec(q,
 			d.NIDN, d.NIPLama, d.NIPBaru, d.KodeJurusan, d.KodeJenjang, d.JenjangMap1, d.JenjangMap2,
 			d.NamaDosen, d.StatusAktif, d.PangkatGolongan, d.JabatanAkademik, d.JabatanFungsional, d.JabatanStruktural, d.StatusPegawai,
 			d.KodeFak, d.NamaFakultas, d.NamaFakultasMap1, d.NamaFakultasMap2,
 			d.KodeProdi, d.NamaProdi, d.NamaProdiMap1, d.NamaProdiMap2,
 			d.ProdiFakultas1, d.ProdiFakultas2, d.Pattern1, d.Pattern2,
-		); err != nil {
+		)
+		if err != nil {
 			log.Printf("❌ upsert dosen (denom): %v", err)
+			return
+		}
+		if b, err := json.MarshalIndent(d, "", "  "); err == nil {
+			fmt.Println("Upsert:\n" + string(b))
+		} else {
+			log.Printf("❌ marshal dosen: %v", err)
 		}
 	} else if before.Exists() {
 		*op = "DOSEN_DELETE"
