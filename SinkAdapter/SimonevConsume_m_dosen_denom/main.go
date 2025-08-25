@@ -46,6 +46,8 @@ type DosenJoined struct {
 	NamaProdi    string `json:"nama_prodi"`
 	NamaProdiMap1    string `json:"nama_prodi_map1"`
 	NamaProdiMap2    string `json:"nama_prodi_map2"`
+	ProdiFakultas1    string `json:"prodi_fakultas1"`
+	ProdiFakultas2    string `json:"prodi_fakultas2"`
 	Pattern1    string `json:"pattern1"`
 	Pattern2    string `json:"pattern2"`
 }
@@ -233,6 +235,8 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 			NamaProdi:    		namaProdi,
 			NamaProdiMap1:    	namaProdi + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
 			NamaProdiMap2:    	namaProdi + " " + mapJenjangV2(after.Get("kode_jenjang").String()),
+			ProdiFakultas1:    	namaProdi + " [" + namaFak + "]",
+			ProdiFakultas2:    	namaProdi + " [" + namaFak + "] " + mapJenjangV2(after.Get("kode_jenjang").String()),
 			Pattern1:    		kodeFak + "#" + after.Get("kode_jenjang").String(),
 			Pattern2:    		kodeFak + "#" + after.Get("kode_jenjang").String() + "#" + kodeProdi,
 		}
