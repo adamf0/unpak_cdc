@@ -262,7 +262,7 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 
 // ---------------- MariaDB ----------------
 func initMariaDB() {
-	dsn := mustEnv("MYSQL_DSN", "root:password@tcp(mariadb:3306)/testdb")
+	dsn := mustEnv("MYSQL_DSN", "unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true")
 	var err error
 	dbSQL, err = sql.Open("mysql", dsn)
 	if err != nil {
