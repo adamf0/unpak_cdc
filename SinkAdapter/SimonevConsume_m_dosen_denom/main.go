@@ -60,8 +60,8 @@ func mustEnv(key, def string) string {
 }
 
 func main() {
-	brokers := mustEnv("KAFKA_BROKERS", defaultBrokers)
-	topicDosen := mustEnv("TOPIC_DOSEN", defaultTopicDosen)
+	brokers := mustEnv("BROKERS", defaultBrokers)
+	topicDosen := mustEnv("TOPIC", defaultTopicDosen)
 
 	log.Printf("▶️  starting joiner-service")
 	log.Printf("    brokers    : %s", brokers)
@@ -78,7 +78,7 @@ func main() {
 	cfg.Consumer.Return.Errors = true
 	cfg.Consumer.Offsets.Initial = sarama.OffsetOldest
 
-	groupID := mustEnv("CONSUMER_GROUP", "dosen-denom")
+	groupID := mustEnv("GROUP_ID", "dosen_denom")
 	consumer, err := sarama.NewConsumerGroup(strings.Split(brokers, ","), groupID, cfg)
 	if err != nil {
 		log.Fatalf("❌ create consumer group: %v", err)
@@ -88,8 +88,14 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	tbl := os.Getenv("TABLE")
+	if tbl == "" {
+		log.Fatal("TABLE environment variable not set")
+	}
+
 	handler := &consumerHandler{
 		topicDosen: topicDosen,
+		tbl: tbl
 	}
 
 	// error listener
@@ -120,6 +126,7 @@ func main() {
 // ---------------- Consumer ----------------
 type consumerHandler struct {
 	topicDosen string
+	tbl: string
 }
 
 func (h *consumerHandler) Setup(sarama.ConsumerGroupSession) error   { return nil }
@@ -248,7 +255,7 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 		// }
 
 		// contoh jika mau insert ke MariaDB
-		q := `INSERT INTO m_dosen_simak_denom 
+		q := fmt.Sprintf(`INSERT INTO %s 
 		      (nidn, nip_lama, nip_baru, kode_jurusan, kode_jenjang, nama_dosen, kode_fak, nama_fakultas, kode_prodi, nama_prodi)
 		      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		      ON DUPLICATE KEY UPDATE
@@ -260,7 +267,7 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 		        kode_fak=VALUES(kode_fak),
 		        nama_fakultas=VALUES(nama_fakultas),
 		        kode_prodi=VALUES(kode_prodi),
-		        nama_prodi=VALUES(nama_prodi)`
+		        nama_prodi=VALUES(nama_prodi)`, h.tbl)
 		if _, err := dbSQL.Exec(q,
 			d.NIDN, d.NIPLama, d.NIPBaru, d.KodeJurusan, d.KodeJenjang, d.NamaDosen,
 			d.KodeFak, d.NamaFakultas, d.KodeProdi, d.NamaProdi,
@@ -272,7 +279,7 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 		nidn := before.Get("NIDN").String()
 		fmt.Println("Delete (denom):\n" + nidn)
 
-		q := `DELETE FROM m_dosen_simak_denom WHERE nidn=?`
+		q := fmt.Sprintf(`DELETE FROM %s WHERE nidn=?`, h.tbl)
 		if _, err := dbSQL.Exec(q, nidn); err != nil {
 			log.Printf("❌ delete dosen: %v", err)
 		}
@@ -281,7 +288,7 @@ func (h *consumerHandler) handleDosen(before, after gjson.Result, op *string) {
 
 // ---------------- MariaDB ----------------
 func initMariaDB() {
-	dsn := mustEnv("MYSQL_DSN", "cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true")
+	dsn := mustEnv("DSN")
 	var err error
 	dbSQL, err = sql.Open("mysql", dsn)
 	if err != nil {

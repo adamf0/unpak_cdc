@@ -157,6 +157,23 @@ services:
     networks:
       - minio-sample
 
+  simonevconsume_m_dosen_denom:
+    image: adamilkom00/simonevconsume_m_dosen_denom:0.0.1
+    container_name: simonevconsume_m_dosen_denom
+    restart: unless-stopped
+    environment:
+      - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
+      - BROKERS=kafka:29092
+      - GROUP_ID=dosen_denom
+      - TOPIC=simak5.unpak_simak.m_dosen
+      - TABLE=m_dosen_simak_denom
+      - REDIS_ADDR=redis:6379
+      - REDIS_PASS=
+    depends_on:
+      - kafka
+    networks:
+      - minio-sample
+
   simonevconsume_m_mahasiswa:
     image: adamilkom00/simonevconsume_m_mahasiswa:0.0.2
     container_name: simonevconsume_m_mahasiswa
@@ -171,6 +188,23 @@ services:
       - kafka
     networks:
       - minio-sample
+
+  # simonevconsume_m_mahasiswa_denom:
+  #   image: adamilkom00/simonevconsume_m_mahasiswa_denom:0.0.2
+  #   container_name: simonevconsume_m_mahasiswa_denom
+  #   restart: unless-stopped
+  #   environment:
+  #     - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
+  #     - BROKERS=kafka:29092
+  #     - GROUP_ID=mahasiswa_denom
+  #     - TOPIC=simak6.unpak_simak.m_mahasiswa
+  #     - TABLE=m_mahasiswa_simak_denom
+  #     - REDIS_ADDR=redis:6379
+  #     - REDIS_PASS=
+  #   depends_on:
+  #     - kafka
+  #   networks:
+  #     - minio-sample
 
   simonevconsume_pengguna:
     image: adamilkom00/simonevconsume_pengguna:0.0.1
