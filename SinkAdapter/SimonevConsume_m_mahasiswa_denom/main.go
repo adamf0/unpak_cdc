@@ -46,6 +46,8 @@ type MahasiswaJoined struct {
 	NamaMahasiswa string `json:"nama_mahasiswa"`
 	StatusAktif   string `json:"status_aktif"`
 	TahunMasuk    string `json:"tahun_masuk"`
+	ProdiFakultas1   string `json:"prodi_fakultas1"`
+	ProdiFakultas2   string `json:"prodi_fakultas2"`
 }
 
 func mustEnv(key, def string) string {
@@ -222,26 +224,27 @@ func (h *consumerHandler) handleMahasiswa(before, after gjson.Result, op *string
 		}
 
 		d := MahasiswaJoined{
-			NIM:         		after.Get("NIM").String(),
-			KodeFak:      		kodeFak,
-			NamaFakultas: 		namaFak,
-			NamaFakultasMap1: 	namaFak + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
-			NamaFakultasMap2: 	namaFak + " " + mapJenjangV2(after.Get("kode_jenjang").String()),
-			
-			KodeJurusan:  		after.Get("kode_jurusan").String(),
-			
-			KodeJenjang:  		after.Get("kode_jenjang").String(),
-			JenjangMap1:  		mapJenjangV1(after.Get("kode_jenjang").String()),
-			JenjangMap2:  		mapJenjangV2(after.Get("kode_jenjang").String()),
-			
-			KodeProdi:    		kodeProdi,
-			NamaProdi:    		namaProdi,
-			NamaProdiMap1:    	namaProdi + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
-			NamaProdiMap2:    	namaProdi + " " + mapJenjangV2(after.Get("kode_jenjang").String()),
+			NIM:           after.Get("NIM").String(),
+			KodeFak:       kodeFak,
+			NamaFakultas:  namaFak,
+			NamaFakultasMap1: namaFak + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
+			NamaFakultasMap2: namaFak + " " + mapJenjangV2(after.Get("kode_jenjang").String()),
 
-			NamaMahasiswa:    	after.Get("nama_mahasiswa").String(),
-			StatusAktif:    	after.Get("status_aktif").String(),
-			TahunMasuk:    		after.Get("tahun_masuk").String(),			
+			KodeJurusan:   after.Get("kode_jurusan").String(),
+			KodeJenjang:   after.Get("kode_jenjang").String(),
+			JenjangMap1:   mapJenjangV1(after.Get("kode_jenjang").String()),
+			JenjangMap2:   mapJenjangV2(after.Get("kode_jenjang").String()),
+
+			KodeProdi:     kodeProdi,
+			NamaProdi:     namaProdi,
+			NamaProdiMap1: namaProdi + " " + mapJenjangV1(after.Get("kode_jenjang").String()),
+			NamaProdiMap2: namaProdi + " " + mapJenjangV2(after.Get("kode_jenjang").String()),
+			ProdiFakultas1: namaProdi + " [" + namaFak + "]",
+			ProdiFakultas2: namaProdi + " [" + namaFak + "] " + mapJenjangV2(after.Get("kode_jenjang").String()),
+
+			NamaMahasiswa: after.Get("nama_mahasiswa").String(),
+			StatusAktif:   after.Get("status_aktif").String(),
+			TahunMasuk:    after.Get("tahun_masuk").String(),
 		}
 
 		if b, err := json.MarshalIndent(d, "", "  "); err == nil {
@@ -252,27 +255,30 @@ func (h *consumerHandler) handleMahasiswa(before, after gjson.Result, op *string
 
 		// contoh jika mau insert ke MariaDB
 		q := fmt.Sprintf(`INSERT INTO %s 
-				(nim, kode_fak, nama_fakultas, nama_fakultas_map1, nama_fakultas_map2,
-				kode_jurusan, kode_jenjang, jenjang_map1, jenjang_map2,
-				kode_prodi, nama_prodi, nama_prodi_map1, nama_prodi_map2,
-				nama_mahasiswa, status_aktif, tahun_masuk)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-				ON DUPLICATE KEY UPDATE
-					kode_fak=VALUES(kode_fak),
-					nama_fakultas=VALUES(nama_fakultas),
-					nama_fakultas_map1=VALUES(nama_fakultas_map1),
-					nama_fakultas_map2=VALUES(nama_fakultas_map2),
-					kode_jurusan=VALUES(kode_jurusan),
-					kode_jenjang=VALUES(kode_jenjang),
-					jenjang_map1=VALUES(jenjang_map1),
-					jenjang_map2=VALUES(jenjang_map2),
-					kode_prodi=VALUES(kode_prodi),
-					nama_prodi=VALUES(nama_prodi),
-					nama_prodi_map1=VALUES(nama_prodi_map1),
-					nama_prodi_map2=VALUES(nama_prodi_map2),
-					nama_mahasiswa=VALUES(nama_mahasiswa),
-					status_aktif=VALUES(status_aktif),
-					tahun_masuk=VALUES(tahun_masuk)`, h.tbl)
+			(nim, kode_fak, nama_fakultas, nama_fakultas_map1, nama_fakultas_map2,
+			 kode_jurusan, kode_jenjang, jenjang_map1, jenjang_map2,
+			 kode_prodi, nama_prodi, nama_prodi_map1, nama_prodi_map2,
+			 nama_mahasiswa, status_aktif, tahun_masuk,
+			 prodi_fakultas1, prodi_fakultas2)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			ON DUPLICATE KEY UPDATE
+				kode_fak=VALUES(kode_fak),
+				nama_fakultas=VALUES(nama_fakultas),
+				nama_fakultas_map1=VALUES(nama_fakultas_map1),
+				nama_fakultas_map2=VALUES(nama_fakultas_map2),
+				kode_jurusan=VALUES(kode_jurusan),
+				kode_jenjang=VALUES(kode_jenjang),
+				jenjang_map1=VALUES(jenjang_map1),
+				jenjang_map2=VALUES(jenjang_map2),
+				kode_prodi=VALUES(kode_prodi),
+				nama_prodi=VALUES(nama_prodi),
+				nama_prodi_map1=VALUES(nama_prodi_map1),
+				nama_prodi_map2=VALUES(nama_prodi_map2),
+				nama_mahasiswa=VALUES(nama_mahasiswa),
+				status_aktif=VALUES(status_aktif),
+				tahun_masuk=VALUES(tahun_masuk),
+				prodi_fakultas1=VALUES(prodi_fakultas1),
+				prodi_fakultas2=VALUES(prodi_fakultas2)`, h.tbl)
 
 		_, err := dbSQL.Exec(q,
 			d.NIM,
@@ -280,6 +286,7 @@ func (h *consumerHandler) handleMahasiswa(before, after gjson.Result, op *string
 			d.KodeJurusan, d.KodeJenjang, d.JenjangMap1, d.JenjangMap2,
 			d.KodeProdi, d.NamaProdi, d.NamaProdiMap1, d.NamaProdiMap2,
 			d.NamaMahasiswa, d.StatusAktif, d.TahunMasuk,
+			d.ProdiFakultas1, d.ProdiFakultas2,
 		)
 		if err != nil {
 			log.Printf("❌ upsert mahasiswa (denom): %v", err)

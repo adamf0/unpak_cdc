@@ -171,6 +171,7 @@ services:
       - REDIS_PASS=
     depends_on:
       - kafka
+      - redis
     networks:
       - minio-sample
 
@@ -190,7 +191,7 @@ services:
       - minio-sample
 
   simonevconsume_m_mahasiswa_denom:
-    image: adamilkom00/simonevconsume_m_mahasiswa_denom:0.0.1
+    image: adamilkom00/simonevconsume_m_mahasiswa_denom:0.0.2
     container_name: simonevconsume_m_mahasiswa_denom
     restart: unless-stopped
     environment:
@@ -203,6 +204,7 @@ services:
       - REDIS_PASS=
     depends_on:
       - kafka
+      - redis
     networks:
       - minio-sample
 
