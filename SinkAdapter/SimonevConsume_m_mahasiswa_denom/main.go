@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"encoding/json"
 	"strings"
 	"syscall"
 	"time"
@@ -305,7 +304,7 @@ func (h *consumerHandler) handleMahasiswa(before, after gjson.Result, op *string
 
 // ---------------- MariaDB ----------------
 func initMariaDB() {
-	dsn := mustEnv("DSN")
+	dsn := mustEnv("DSN","")
 	var err error
 	dbSQL, err = sql.Open("mysql", dsn)
 	if err != nil {
