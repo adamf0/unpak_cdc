@@ -208,80 +208,80 @@ services:
   #   networks:
   #     - minio-sample
 
-  # simonevconsume_pengguna:
-  #   image: adamilkom00/simonevconsume_pengguna:0.0.1
-  #   container_name: simonevconsume_pengguna
-  #   restart: unless-stopped
-  #   environment:
-  #     - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
-  #     - BROKERS=kafka:29092
-  #     - GROUP_ID=pengguna_consumeto_simonev
-  #     - TOPIC=simpeg7.unpak_simpeg.pengguna
-  #     - TABLE=pengguna_simpeg
-  #   depends_on:
-  #     - kafka
-  #   networks:
-  #     - minio-sample
+  simonevconsume_pengguna:
+    image: adamilkom00/simonevconsume_pengguna:0.0.1
+    container_name: simonevconsume_pengguna
+    restart: unless-stopped
+    environment:
+      - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
+      - BROKERS=kafka:29092
+      - GROUP_ID=pengguna_consumeto_simonev
+      - TOPIC=simpeg7.unpak_simpeg.pengguna
+      - TABLE=pengguna_simpeg
+    depends_on:
+      - kafka
+    networks:
+      - minio-sample
 
-  # simonevconsume_e_pribadi:
-  #   image: adamilkom00/simonevconsume_e_pribadi:0.0.1
-  #   container_name: simonevconsume_e_pribadi
-  #   restart: unless-stopped
-  #   environment:
-  #     - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
-  #     - BROKERS=kafka:29092
-  #     - GROUP_ID=e_pribadi_consumeto_simonev
-  #     - TOPIC=simpeg8.unpak_simpeg.e_pribadi
-  #     - TABLE=e_pribadi_simpeg
-  #   depends_on:
-  #     - kafka
-  #   networks:
-  #     - minio-sample
+  simonevconsume_e_pribadi:
+    image: adamilkom00/simonevconsume_e_pribadi:0.0.1
+    container_name: simonevconsume_e_pribadi
+    restart: unless-stopped
+    environment:
+      - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
+      - BROKERS=kafka:29092
+      - GROUP_ID=e_pribadi_consumeto_simonev
+      - TOPIC=simpeg8.unpak_simpeg.e_pribadi
+      - TABLE=e_pribadi_simpeg
+    depends_on:
+      - kafka
+    networks:
+      - minio-sample
 
-  # simonevconsume_n_pribadi:
-  #   image: adamilkom00/simonevconsume_n_pribadi:0.0.1
-  #   container_name: simonevconsume_n_pribadi
-  #   restart: unless-stopped
-  #   environment:
-  #     - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
-  #     - BROKERS=kafka:29092
-  #     - GROUP_ID=n_pribadi_consumeto_simonev
-  #     - TOPIC=simpeg9.unpak_simpeg.n_pribadi
-  #     - TABLE=n_pribadi_simpeg
-  #   depends_on:
-  #     - kafka
-  #   networks:
-  #     - minio-sample
+  simonevconsume_n_pribadi:
+    image: adamilkom00/simonevconsume_n_pribadi:0.0.1
+    container_name: simonevconsume_n_pribadi
+    restart: unless-stopped
+    environment:
+      - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
+      - BROKERS=kafka:29092
+      - GROUP_ID=n_pribadi_consumeto_simonev
+      - TOPIC=simpeg9.unpak_simpeg.n_pribadi
+      - TABLE=n_pribadi_simpeg
+    depends_on:
+      - kafka
+    networks:
+      - minio-sample
 
-  # simonevconsume_n_pengangkatan:
-  #   image: adamilkom00/simonevconsume_n_pengangkatan:0.0.1
-  #   container_name: simonevconsume_n_pengangkatan
-  #   restart: unless-stopped
-  #   environment:
-  #     - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
-  #     - BROKERS=kafka:29092
-  #     - GROUP_ID=n_pengangkatan_consumeto_simonev
-  #     - TOPIC=simpeg10.unpak_simpeg.n_pengangkatan
-  #     - TABLE=n_pengangkatan_simpeg
-  #   depends_on:
-  #     - kafka
-  #   networks:
-  #     - minio-sample
+  simonevconsume_n_pengangkatan:
+    image: adamilkom00/simonevconsume_n_pengangkatan:0.0.1
+    container_name: simonevconsume_n_pengangkatan
+    restart: unless-stopped
+    environment:
+      - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
+      - BROKERS=kafka:29092
+      - GROUP_ID=n_pengangkatan_consumeto_simonev
+      - TOPIC=simpeg10.unpak_simpeg.n_pengangkatan
+      - TABLE=n_pengangkatan_simpeg
+    depends_on:
+      - kafka
+    networks:
+      - minio-sample
 
-  # simonevconsume_payroll_m_pegawai:
-  #   image: adamilkom00/simonevconsume_payroll_m_pegawai:0.0.3
-  #   container_name: simonevconsume_payroll_m_pegawai
-  #   restart: unless-stopped
-  #   environment:
-  #     - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
-  #     - BROKERS=kafka:29092
-  #     - GROUP_ID=payroll_m_pegawai_consumeto_simonev
-  #     - TOPIC=simpeg11.unpak_simpeg.payroll_m_pegawai
-  #     - TABLE=payroll_m_pegawai_simpeg
-  #   depends_on:
-  #     - kafka
-  #   networks:
-  #     - minio-sample
+  simonevconsume_payroll_m_pegawai:
+    image: adamilkom00/simonevconsume_payroll_m_pegawai:0.0.3
+    container_name: simonevconsume_payroll_m_pegawai
+    restart: unless-stopped
+    environment:
+      - DSN=cdc:unp@kcdc0k3@tcp(172.16.20.245:3306)/unpak_simonev?parseTime=true
+      - BROKERS=kafka:29092
+      - GROUP_ID=payroll_m_pegawai_consumeto_simonev
+      - TOPIC=simpeg11.unpak_simpeg.payroll_m_pegawai
+      - TABLE=payroll_m_pegawai_simpeg
+    depends_on:
+      - kafka
+    networks:
+      - minio-sample
 
 volumes:
   zookeeper-data:
